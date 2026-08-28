@@ -1,16 +1,29 @@
 const { test, expect } = require('@playwright/test');
 
-async function collectClientErrors(page) {
-  const errors = [];
-  page.on('pageerror', err => errors.push(`pageerror: ${err.message || err}`));
-  page.on('console', msg => {
-    if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
+function collectClientErrors(page) {
+  const state = { errors: [], ignoreExpectedAuth400: false };
+
+  page.on('pageerror', err => {
+    state.errors.push(`pageerror: ${err.message || err}`);
   });
-  return errors;
+
+  page.on('console', msg => {
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    const expectedAuth400 = state.ignoreExpectedAuth400 &&
+      /Failed to load resource: the server responded with a status of 400/i.test(text);
+    if (!expectedAuth400) state.errors.push(`console: ${text}`);
+  });
+
+  return state;
+}
+
+function visibleNav(page, id) {
+  return page.locator(`[data-page="${id}"]:visible`).first();
 }
 
 async function exerciseAlpha(page) {
-  const errors = await collectClientErrors(page);
+  const client = collectClientErrors(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   await expect(page.locator('#authGate')).toBeVisible();
@@ -26,13 +39,17 @@ async function exerciseAlpha(page) {
 
   // Confirm the Supabase browser SDK loads. This does not create a user.
   await expect.poll(async () => page.evaluate(() => Boolean(window.supabase)), { timeout: 15000 }).toBe(true);
+  expect(client.errors, `Errors before auth request: ${client.errors.join('\n')}`).toEqual([]);
 
   // Exercise a real Auth request with deliberately invalid credentials.
-  // Success means the form is wired to Supabase and returns an error instead of doing nothing.
+  // Supabase correctly returns HTTP 400 for invalid credentials; Chrome logs that
+  // resource response as a console error, so suppress only that expected interval.
+  client.ignoreExpectedAuth400 = true;
   await page.locator('#authEmail').fill('qa-nonexistent@example.com');
   await page.locator('#authPassword').fill('not-a-real-password');
   await page.locator('#authSubmit').click();
   await expect(page.locator('#authMsg')).not.toHaveText(/^(|Signing in…)$/, { timeout: 15000 });
+  client.ignoreExpectedAuth400 = false;
 
   // Demo mode must dismiss the auth overlay and reveal a functional app.
   await page.locator('#demoMode').click();
@@ -41,9 +58,10 @@ async function exerciseAlpha(page) {
   await expect(page.locator('#pageTitle')).toHaveText('Today');
   await expect(page.locator('.hero-card')).toHaveCount(1);
 
-  // Main navigation.
+  // Main navigation. Use the visible nav so the same test works on desktop sidebar
+  // and mobile bottom navigation.
   for (const [id, title] of [['calendar','Calendar'],['diary','Diary'],['insights','Insights'],['profile','Profile'],['home','Today']]) {
-    await page.locator(`[data-page="${id}"]`).first().click();
+    await visibleNav(page, id).click();
     await expect(page.locator('#pageTitle')).toHaveText(title);
     await expect(page.locator(`#page-${id}`)).toBeVisible();
   }
@@ -58,13 +76,13 @@ async function exerciseAlpha(page) {
   await expect(page.locator('#page-home')).toContainText('Automated QA task');
 
   // Diary must accept and save demo content.
-  await page.locator('[data-page="diary"]').first().click();
+  await visibleNav(page, 'diary').click();
   await page.locator('#diaryTitle').fill('Automated QA diary');
   await page.locator('#diaryEditor').fill('Browser-driven QA content.');
   await page.waitForTimeout(1000);
   await expect(page.locator('#diarySave')).toContainText(/Saved|Local/i);
 
-  expect(errors, `Client errors: ${errors.join('\n')}`).toEqual([]);
+  expect(client.errors, `Unexpected client errors: ${client.errors.join('\n')}`).toEqual([]);
 }
 
 test.describe('Cosmic Planner Alpha 1 staging', () => {
