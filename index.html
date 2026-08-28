@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111318" />
+  <meta name="description" content="Cosmic Planner staging experience" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Cosmic Planner — Staging Preview</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand"><span class="brand-mark">✦</span><div><strong>Cosmic</strong><span>Planner</span></div></div>
+      <nav id="desktopNav" class="nav-stack"></nav>
+      <div class="sidebar-card">
+        <span class="eyebrow">Today’s alignment</span>
+        <div class="mini-score"><strong>82</strong><span>/100</span></div>
+        <p>Strong window for focused work from 14:10–16:20.</p>
+      </div>
+      <button class="profile-chip" data-page="profile"><span class="avatar">SB</span><span><strong>Staging User</strong><small>Preview workspace</small></span><span>›</span></button>
+    </aside>
+
+    <main class="main" id="mainContent" tabindex="-1">
+      <header class="topbar">
+        <div><span class="eyebrow" id="pageEyebrow">Friday · 28 August</span><h1 id="pageTitle">Today</h1></div>
+        <div class="top-actions"><button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button><button class="primary-btn" id="quickAdd">＋ Add plan</button></div>
+      </header>
+
+      <section id="page-home" class="page active"></section>
+      <section id="page-calendar" class="page"></section>
+      <section id="page-diary" class="page"></section>
+      <section id="page-insights" class="page"></section>
+      <section id="page-profile" class="page"></section>
+    </main>
+
+    <nav id="mobileNav" class="mobile-nav" aria-label="Mobile navigation"></nav>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div><span class="eyebrow">Quick capture</span><h2 id="modalTitle">Add to your day</h2></div><button class="icon-btn" id="closeModal" aria-label="Close">×</button></div>
+      <form id="taskForm" class="form-grid">
+        <label class="field full"><span>Title</span><input id="taskTitle" required maxlength="180" placeholder="What do you want to plan?" /></label>
+        <label class="field"><span>Time</span><input id="taskTime" type="time" value="14:30" required /></label>
+        <label class="field"><span>Category</span><select id="taskCategory"><option>Work</option><option>Personal</option><option>Finance</option><option>Love</option><option>Wellness</option></select></label>
+        <label class="field full"><span>Priority</span><div class="segmented"><button type="button" data-priority="Low">Low</button><button type="button" data-priority="Medium" class="selected">Medium</button><button type="button" data-priority="High">High</button></div></label>
+        <div class="modal-actions full"><button type="button" class="secondary-btn" id="cancelTask">Cancel</button><button class="primary-btn" type="submit">Add to planner</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
