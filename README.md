@@ -33,3 +33,7 @@ Included in staging:
 ## Deployment rule
 
 Production remains locked until the staging build passes UX, security, accessibility, persistence, calculation-engine and integration QA.
+
+## Integration status
+
+Vercel Git integration is connected to this repository. Staging commits are used to trigger preview deployments for review; production remains gated behind explicit approval.
