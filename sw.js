@@ -1,5 +1,5 @@
-const CACHE='cosmic-planner-alpha1-v2';
-const CORE=['./','./index.html','./styles.css?v=alpha1-2','./app.js?v=alpha1-2','./manifest.json?v=alpha1-2'];
+const CACHE='cosmic-planner-alpha1-v3';
+const CORE=['./','./index.html','./styles.css?v=alpha1-3','./alpha-fix.css?v=alpha1-3','./app.js?v=alpha1-3','./manifest.json?v=alpha1-3'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
@@ -20,7 +20,6 @@ self.addEventListener('fetch',event=>{
   const url=new URL(req.url);
   const sameOrigin=url.origin===self.location.origin;
 
-  // Navigations and core app assets are network-first so staging changes appear immediately.
   if(req.mode==='navigate' || (sameOrigin && ['document','script','style','manifest'].includes(req.destination))){
     event.respondWith(
       fetch(req)
@@ -34,6 +33,5 @@ self.addEventListener('fetch',event=>{
     return;
   }
 
-  // Other static resources may use cache-first behavior.
   event.respondWith(caches.match(req).then(hit=>hit||fetch(req)));
 });
