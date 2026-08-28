@@ -37,3 +37,5 @@ Production remains locked until the staging build passes UX, security, accessibi
 ## Integration status
 
 Vercel Git integration is connected to this repository. Staging commits are used to trigger preview deployments for review; production remains gated behind explicit approval.
+
+Environment routing verified on 28 August 2026: `main` tracks Production and `staging` is routed through Preview.
