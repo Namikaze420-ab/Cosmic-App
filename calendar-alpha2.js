@@ -37,10 +37,15 @@
   }
 
   async function refreshPlannerAfterSync() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const fallbackStart = new Date(today);
+    fallbackStart.setDate(fallbackStart.getDate() - 31);
+    const fallbackEnd = new Date(today);
+    fallbackEnd.setDate(fallbackEnd.getDate() + 365);
+    fallbackEnd.setHours(23, 59, 59, 999);
+    const start = state.plannerLoadedStart ? new Date(state.plannerLoadedStart) : fallbackStart;
+    const end = state.plannerLoadedEnd ? new Date(state.plannerLoadedEnd) : fallbackEnd;
     const { data, error } = await sb
       .from('planner_items')
       .select('*')
