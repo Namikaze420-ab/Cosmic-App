@@ -1,5 +1,5 @@
-const CACHE='cosmic-planner-alpha2-v6';
-const CORE=['./','./index.html','./styles.css?v=alpha2-6','./alpha-fix.css?v=alpha2-6','./app.js?v=alpha2-6','./rpc-fix.js?v=alpha2-6','./auth-fix.js?v=alpha2-6','./password-policy.js?v=alpha2-6','./astrology-alpha2.js?v=alpha2-6','./notifications-alpha2.js?v=alpha2-6','./calendar-alpha2.js?v=alpha2-6','./palm-alpha2.js?v=alpha2-6','./privacy-alpha2.js?v=alpha2-6','./push-alpha2.js?v=alpha2-6','./manifest.json?v=alpha2-6'];
+const CACHE='cosmic-planner-alpha2-v7';
+const CORE=['./','./index.html','./styles.css?v=alpha2-7','./alpha-fix.css?v=alpha2-7','./alpha27-quality.css?v=alpha2-7','./app.js?v=alpha2-7','./rpc-fix.js?v=alpha2-7','./auth-fix.js?v=alpha2-7','./password-policy.js?v=alpha2-7','./astrology-alpha2.js?v=alpha2-7','./notifications-alpha2.js?v=alpha2-7','./calendar-alpha2.js?v=alpha2-7','./palm-alpha2.js?v=alpha2-7','./palm-ai-alpha27.js?v=alpha2-7','./privacy-alpha2.js?v=alpha2-7','./push-alpha2.js?v=alpha2-7','./diagnostics-alpha27.js?v=alpha2-7','./manifest.json?v=alpha2-7'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
