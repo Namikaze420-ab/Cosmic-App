@@ -27,7 +27,7 @@
 ## Alpha 2.8 implemented
 
 ### Multi-day planner
-- Planner modal now captures an explicit date and time instead of forcing every new plan onto today
+- Planner modal captures an explicit date and time instead of forcing every new plan onto today
 - Live signed-in planner initially loads 31 days of history and 365 days ahead
 - Additional calendar months are fetched lazily when needed
 - Future plans persist through Supabase under existing user-scoped RLS
@@ -44,9 +44,9 @@
 - Selected-day plans support edit/complete/delete for Cosmic Planner-owned tasks
 - Weekly workload view shows Monday–Sunday task counts, planned hours and completion progress
 - Week-day selection updates the main calendar/day detail context
-- Google Calendar refresh now preserves the currently loaded multi-day planner range instead of collapsing state back to today
+- Google Calendar refresh preserves the currently loaded multi-day planner range instead of collapsing state back to today
 
-### Existing Alpha 2.7 privacy and safety foundation retained
+### Existing privacy and safety foundation retained
 - Palm upload does not imply AI processing consent
 - Per-image append-only Palmistry AI consent grant/revoke history with 1/7/30-day retention selection
 - Palmistry AI model processing remains disabled
@@ -73,19 +73,7 @@ Alpha 2.8 adds explicit coverage for:
 - browser reload persistence for future plans
 - UI deletion followed by database deletion verification
 
-The full suite also continues to cover:
-- desktop and mobile core behavior
-- password policy
-- birth timezone/coordinate validation
-- authenticated Astrology Edge Function, Ascendant and Equal House calculations
-- Google Calendar safety boundaries
-- notification and Web Push foundations
-- cross-user planner/diary RLS isolation
-- private palm storage and Palmistry AI consent withdrawal
-- privacy-safe diagnostics opt-in/out
-- account export and deletion
-- keyboard accessibility, reduced motion and deterministic startup/resource budgets
-- push-dispatch fail-closed behavior
+The full suite also continues to cover desktop/mobile core behavior, authentication/password rules, birth timezone/coordinates, astrology, Google Calendar safety boundaries, notification/Web Push foundations, cross-user RLS isolation, private palm storage/consent, diagnostics opt-in/out, account export/deletion, accessibility/performance budgets, and push-dispatch fail-closed behavior.
 
 Post-run cleanup verification:
 - disposable E2E auth users: **0**
@@ -112,6 +100,6 @@ Post-run cleanup verification:
 8. Broader physical-device/cross-browser accessibility and performance release pass
 9. Final commercial architecture/release review before store packaging
 
-**This checkpoint is still staging-only. Passing QA is not authorization to merge or deploy production.**
+**This checkpoint is staging-only. Passing QA is not authorization to merge or deploy production.**
 
 Production remains intentionally locked. Do not merge `staging` into `main` until the owner explicitly approves promotion.
