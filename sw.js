@@ -1,5 +1,5 @@
-const CACHE='cosmic-planner-alpha2-v4';
-const CORE=['./','./index.html','./styles.css?v=alpha2-4','./alpha-fix.css?v=alpha2-4','./app.js?v=alpha2-4','./rpc-fix.js?v=alpha2-4','./auth-fix.js?v=alpha2-4','./password-policy.js?v=alpha2-4','./astrology-alpha2.js?v=alpha2-4','./notifications-alpha2.js?v=alpha2-4','./calendar-alpha2.js?v=alpha2-4','./palm-alpha2.js?v=alpha2-4','./privacy-alpha2.js?v=alpha2-4','./manifest.json?v=alpha2-4'];
+const CACHE='cosmic-planner-alpha2-v5';
+const CORE=['./','./index.html','./styles.css?v=alpha2-5','./alpha-fix.css?v=alpha2-5','./app.js?v=alpha2-5','./rpc-fix.js?v=alpha2-5','./auth-fix.js?v=alpha2-5','./password-policy.js?v=alpha2-5','./astrology-alpha2.js?v=alpha2-5','./notifications-alpha2.js?v=alpha2-5','./calendar-alpha2.js?v=alpha2-5','./palm-alpha2.js?v=alpha2-5','./privacy-alpha2.js?v=alpha2-5','./push-alpha2.js?v=alpha2-5','./manifest.json?v=alpha2-5'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
@@ -34,4 +34,35 @@ self.addEventListener('fetch',event=>{
   }
 
   event.respondWith(caches.match(req).then(hit=>hit||fetch(req)));
+});
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; }
+  catch { payload = { body: event.data ? event.data.text() : '' }; }
+
+  const title = String(payload.title || 'Cosmic Planner reminder');
+  const options = {
+    body: String(payload.body || 'You have a scheduled reminder.'),
+    tag: String(payload.tag || 'cosmic-background-reminder'),
+    renotify: false,
+    data: { url: String(payload.url || './') },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = new URL(event.notification?.data?.url || './', self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      if ('focus' in client) {
+        if ('navigate' in client && client.url !== target) await client.navigate(target);
+        return client.focus();
+      }
+    }
+    if (clients.openWindow) return clients.openWindow(target);
+    return null;
+  })());
 });
