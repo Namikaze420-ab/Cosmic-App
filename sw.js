@@ -1,5 +1,5 @@
-const CACHE='cosmic-planner-alpha1-v6';
-const CORE=['./','./index.html','./styles.css?v=alpha1-6','./alpha-fix.css?v=alpha1-6','./app.js?v=alpha1-6','./rpc-fix.js?v=alpha1-6','./auth-fix.js?v=alpha1-6','./password-policy.js?v=alpha1-6','./manifest.json?v=alpha1-6'];
+const CACHE='cosmic-planner-alpha2-v1';
+const CORE=['./','./index.html','./styles.css?v=alpha2-1','./alpha-fix.css?v=alpha2-1','./app.js?v=alpha2-1','./rpc-fix.js?v=alpha2-1','./auth-fix.js?v=alpha2-1','./password-policy.js?v=alpha2-1','./astrology-alpha2.js?v=alpha2-1','./manifest.json?v=alpha2-1'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
