@@ -34,6 +34,14 @@
     el.dataset.kind = 'error';
   }
 
+  function showProblem(input, messageSelector) {
+    const error = problem(input?.value || '');
+    if (!error) return false;
+    setMessage(messageSelector, `Password requirement: ${error}`);
+    input?.focus();
+    return true;
+  }
+
   function ensureHint() {
     const input = document.querySelector('#authPassword');
     if (!input) return;
@@ -59,33 +67,50 @@
     if (form.id === 'authForm') {
       const submit = document.querySelector('#authSubmit');
       if (submit?.dataset.mode !== 'signup') return;
-      const password = document.querySelector('#authPassword');
-      const error = problem(password?.value || '');
-      if (!error) return;
-
+      if (!showProblem(document.querySelector('#authPassword'), '#authMsg')) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      setMessage('#authMsg', `Password requirement: ${error}`);
-      password?.focus();
       return;
     }
 
     if (form.id === 'recoveryForm') {
-      const password = document.querySelector('#recoveryPassword');
-      const error = problem(password?.value || '');
-      if (!error) return;
-
+      if (!showProblem(document.querySelector('#recoveryPassword'), '#recoveryMsg')) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (password) password.minLength = POLICY.minLength;
-      const confirm = document.querySelector('#recoveryPassword2');
-      if (confirm) confirm.minLength = POLICY.minLength;
-      setMessage('#recoveryMsg', `Password requirement: ${error}`);
-      password?.focus();
+    }
+  }
+
+  // Native constraint validation runs before a submit event. Intercept the submit
+  // button click as well so users see the same clear policy message instead of a
+  // browser-specific validation bubble. The submit handler remains for Enter-key
+  // and programmatic submissions that do reach the submit event.
+  function interceptSubmitClick(event) {
+    const submit = event.target.closest?.('#authSubmit, #recoverySubmit');
+    if (!submit) return;
+
+    if (submit.id === 'authSubmit') {
+      if (submit.dataset.mode !== 'signup') return;
+      if (!showProblem(document.querySelector('#authPassword'), '#authMsg')) return;
+    } else if (!showProblem(document.querySelector('#recoveryPassword'), '#recoveryMsg')) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  function interceptInvalid(event) {
+    const input = event.target;
+    if (input?.id === 'authPassword' && document.querySelector('#authSubmit')?.dataset.mode === 'signup') {
+      showProblem(input, '#authMsg');
+    } else if (input?.id === 'recoveryPassword') {
+      showProblem(input, '#recoveryMsg');
     }
   }
 
   document.addEventListener('submit', interceptSubmit, true);
+  document.addEventListener('click', interceptSubmitClick, true);
+  document.addEventListener('invalid', interceptInvalid, true);
   document.addEventListener('click', (event) => {
     if (event.target.closest?.('#authToggle')) setTimeout(ensureHint, 0);
   }, true);
