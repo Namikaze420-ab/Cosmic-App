@@ -46,6 +46,42 @@ async function exerciseAlpha(page) {
   await expect.poll(async () => page.evaluate(() => Boolean(window.supabase)), { timeout: 15000 }).toBe(true);
   expect(client.errors, `Errors before auth request: ${client.errors.join('\n')}`).toEqual([]);
 
+  // Regression test for: "sb.rpc(...).catch is not a function".
+  // Supabase PostgREST builders are awaitable thenables, but not native Promises.
+  // Mock that exact shape: it has .then() and deliberately has no .catch().
+  const rpcCompatible = await page.evaluate(async () => {
+    const original = {
+      mode: state.mode,
+      user: state.user,
+      profile: state.profile,
+      rpc: sb.rpc,
+    };
+
+    state.mode = 'live';
+    state.user = { id: 'qa-rpc-user' };
+    state.profile = {
+      display_name: 'QA',
+      birth_date: '1995-03-15',
+      onboarding_completed: true,
+    };
+
+    sb.rpc = () => ({
+      then(resolve) {
+        resolve({ data: null, error: null });
+      },
+    });
+
+    try {
+      return await persistInsight();
+    } finally {
+      state.mode = original.mode;
+      state.user = original.user;
+      state.profile = original.profile;
+      sb.rpc = original.rpc;
+    }
+  });
+  expect(rpcCompatible).toBe(true);
+
   // Exercise a real Auth request with deliberately invalid credentials.
   // Supabase correctly returns HTTP 400 for invalid credentials; Chrome logs that
   // resource response as a console error, so suppress only that expected interval.
