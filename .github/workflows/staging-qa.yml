@@ -11,11 +11,12 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,8 +32,68 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run desktop and mobile browser QA
+      - name: Create disposable signed-in E2E accounts
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          token() {
+            curl -fsSL \
+              -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value'
+          }
+          create_account() {
+            local oidc="$1"
+            curl -fsSL -X POST \
+              'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
+              -H "Authorization: Bearer ${oidc}" \
+              -H 'Content-Type: application/json' \
+              --data '{"action":"create"}'
+          }
+
+          OIDC="$(token)"
+          A="$(create_account "$OIDC")"
+          B="$(create_account "$OIDC")"
+
+          A_ID="$(jq -r '.user_id' <<<"$A")"
+          A_EMAIL="$(jq -r '.email' <<<"$A")"
+          A_PASSWORD="$(jq -r '.password' <<<"$A")"
+          B_ID="$(jq -r '.user_id' <<<"$B")"
+          B_EMAIL="$(jq -r '.email' <<<"$B")"
+          B_PASSWORD="$(jq -r '.password' <<<"$B")"
+
+          for value in "$A_ID" "$A_EMAIL" "$A_PASSWORD" "$B_ID" "$B_EMAIL" "$B_PASSWORD"; do
+            echo "::add-mask::$value"
+          done
+
+          {
+            echo "COSMIC_E2E_A_ID=$A_ID"
+            echo "COSMIC_E2E_A_EMAIL=$A_EMAIL"
+            echo "COSMIC_E2E_A_PASSWORD=$A_PASSWORD"
+            echo "COSMIC_E2E_B_ID=$B_ID"
+            echo "COSMIC_E2E_B_EMAIL=$B_EMAIL"
+            echo "COSMIC_E2E_B_PASSWORD=$B_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Run desktop, mobile and signed-in browser QA
         run: npm run test:qa
+
+      - name: Delete disposable E2E accounts
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set +e
+          OIDC="$(curl -fsSL -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value')"
+          for USER_ID in "${COSMIC_E2E_A_ID:-}" "${COSMIC_E2E_B_ID:-}"; do
+            [ -z "$USER_ID" ] && continue
+            BODY="$(jq -nc --arg id "$USER_ID" '{action:"delete",user_id:$id}')"
+            curl -fsSL -X POST \
+              'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
+              -H "Authorization: Bearer ${OIDC}" \
+              -H 'Content-Type: application/json' \
+              --data "$BODY" >/dev/null
+          done
+          exit 0
 
       - name: Upload failure artifacts
         if: failure()
