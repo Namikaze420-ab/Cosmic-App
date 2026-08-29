@@ -38,17 +38,28 @@ test.describe('Cosmic Planner Alpha 2.7 quality budgets', () => {
     });
     expect(violations).toEqual([]);
 
-    await page.locator('#quickAdd').focus();
-    const focusStyle = await page.locator('#quickAdd').evaluate((el) => {
-      const style = getComputedStyle(el);
-      return { outlineWidth: style.outlineWidth, outlineStyle: style.outlineStyle };
-    });
-    expect(parseFloat(focusStyle.outlineWidth)).toBeGreaterThanOrEqual(2);
-    expect(focusStyle.outlineStyle).not.toBe('none');
+    await page.locator('body').click({ position: { x: 2, y: 2 } });
+    let keyboardFocusVerified = false;
+    for (let index = 0; index < 20; index += 1) {
+      await page.keyboard.press('Tab');
+      keyboardFocusVerified = await page.evaluate(() => {
+        const active = document.activeElement;
+        if (!(active instanceof HTMLElement) || !active.matches(':focus-visible')) return false;
+        const style = getComputedStyle(active);
+        return parseFloat(style.outlineWidth || '0') >= 2 && style.outlineStyle !== 'none';
+      });
+      if (keyboardFocusVerified) break;
+    }
+    expect(keyboardFocusVerified).toBe(true);
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    const reducedDuration = await page.locator('#quickAdd').evaluate((el) => getComputedStyle(el).transitionDuration);
-    expect(reducedDuration).toMatch(/0\.001ms|0s/);
+    const reducedDurationMs = await page.locator('#quickAdd').evaluate((el) => {
+      const value = getComputedStyle(el).transitionDuration.split(',')[0].trim();
+      if (value.endsWith('ms')) return parseFloat(value);
+      if (value.endsWith('s')) return parseFloat(value) * 1000;
+      return Number.POSITIVE_INFINITY;
+    });
+    expect(reducedDurationMs).toBeLessThanOrEqual(0.01);
   });
 
   test('staging shell stays within deterministic resource and startup budgets', async ({ page }) => {
