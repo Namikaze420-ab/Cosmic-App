@@ -58,7 +58,7 @@
 ## Alpha 2.8 E2E quality gate
 GitHub Actions uses GitHub OIDC rather than stored test credentials. The trusted `staging` pull-request workflow creates two short-lived confirmed Supabase users with generated masked passwords, executes browser/live-data QA, removes private Storage objects first, deletes the auth identities, then sweeps orphan palm objects.
 
-**Verified gate: 16/16 Playwright tests passed in 37.1 seconds.**
+**Verified implementation gate: 16/16 Playwright tests passed in 37.1 seconds.**
 
 Alpha 2.8 adds explicit coverage for:
 - future-date creation in demo mode
@@ -111,5 +111,7 @@ Post-run cleanup verification:
 7. Legal/privacy copy and final data-rights review
 8. Broader physical-device/cross-browser accessibility and performance release pass
 9. Final commercial architecture/release review before store packaging
+
+**This checkpoint is still staging-only. Passing QA is not authorization to merge or deploy production.**
 
 Production remains intentionally locked. Do not merge `staging` into `main` until the owner explicitly approves promotion.
