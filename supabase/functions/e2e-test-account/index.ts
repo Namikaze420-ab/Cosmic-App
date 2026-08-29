@@ -6,6 +6,7 @@ const AUDIENCE = "cosmic-staging-e2e";
 const REPOSITORY = "Namikaze420-ab/Cosmic-App";
 const REPOSITORY_ID = "1349255125";
 const OWNER_ID = "119625895";
+const PALM_BUCKET = "palm-uploads";
 const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks`));
 
 function json(body: unknown, status = 200) {
@@ -47,6 +48,51 @@ function randomPassword() {
   return `Aa9!${token}`;
 }
 
+function looksLikeUserFolder(name: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(name);
+}
+
+async function removePalmFolder(admin: any, userId: string) {
+  const bucket = admin.storage.from(PALM_BUCKET);
+  const { data: files, error: listError } = await bucket.list(userId, { limit: 1000 });
+  if (listError) throw new Error(`Could not list E2E palm objects: ${listError.message}`);
+  const paths = (files || []).filter((entry: any) => entry?.name && entry?.id).map((entry: any) => `${userId}/${entry.name}`);
+  if (!paths.length) return 0;
+  const { error: removeError } = await bucket.remove(paths);
+  if (removeError) throw new Error(`Could not remove E2E palm objects: ${removeError.message}`);
+  return paths.length;
+}
+
+async function sweepOrphanPalmFolders(admin: any) {
+  const bucket = admin.storage.from(PALM_BUCKET);
+  const { data: roots, error: rootError } = await bucket.list('', { limit: 1000 });
+  if (rootError) throw new Error(`Could not list palm root: ${rootError.message}`);
+
+  let removedFolders = 0;
+  let removedObjects = 0;
+  for (const entry of roots || []) {
+    const folder = String(entry?.name || '');
+    // Our storage contract is exactly <auth-user-uuid>/<image>. Ignore anything
+    // outside that contract rather than treating an unfamiliar entry as disposable.
+    if (!looksLikeUserFolder(folder) || entry?.id) continue;
+
+    const { data, error } = await admin.auth.admin.getUserById(folder);
+    if (data?.user) continue;
+    const status = Number((error as any)?.status || 0);
+    if (status && status !== 404) {
+      console.warn('Skipping orphan sweep after non-404 auth lookup error', folder, status);
+      continue;
+    }
+
+    const count = await removePalmFolder(admin, folder);
+    if (count) {
+      removedFolders += 1;
+      removedObjects += count;
+    }
+  }
+  return { removed_folders: removedFolders, removed_objects: removedObjects };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   let claims: any;
@@ -62,6 +108,15 @@ Deno.serve(async (req: Request) => {
   if (!url) return json({ error: "Server configuration unavailable" }, 500);
   const admin = createClient(url, serviceRoleKey(), { auth: { persistSession: false, autoRefreshToken: false } });
   const runId = String(claims.run_id || "unknown");
+
+  if (body.action === "sweep_orphans") {
+    try {
+      return json({ ok: true, ...(await sweepOrphanPalmFolders(admin)) });
+    } catch (error) {
+      console.error('E2E palm orphan sweep failed', error instanceof Error ? error.message : error);
+      return json({ error: 'Could not sweep orphaned E2E palm storage safely.' }, 500);
+    }
+  }
 
   if (body.action === "create") {
     const password = randomPassword();
@@ -88,9 +143,18 @@ Deno.serve(async (req: Request) => {
     if (meta.cosmic_e2e !== true || String(meta.github_run_id || "") !== runId) {
       return json({ error: "Refusing to delete a non-E2E or different-run account" }, 403);
     }
-    const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error) return json({ error: "Could not delete disposable test account" }, 500);
-    return json({ ok: true, deleted: userId });
+
+    try {
+      // Storage is not covered by auth.users ON DELETE CASCADE. Remove the entire
+      // E2E user's private palm folder first and abort deletion if that cannot be done.
+      const removedPalmObjects = await removePalmFolder(admin, userId);
+      const { error } = await admin.auth.admin.deleteUser(userId);
+      if (error) return json({ error: "Could not delete disposable test account" }, 500);
+      return json({ ok: true, deleted: userId, removed_palm_objects: removedPalmObjects });
+    } catch (error) {
+      console.error('E2E storage-first deletion failed', error instanceof Error ? error.message : error);
+      return json({ error: 'Disposable account cleanup stopped before auth deletion because private storage cleanup failed.' }, 500);
+    }
   }
 
   return json({ error: "Unsupported action" }, 400);
