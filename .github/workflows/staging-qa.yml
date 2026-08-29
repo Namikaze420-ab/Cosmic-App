@@ -42,18 +42,24 @@ jobs:
               -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value'
           }
-          create_account() {
+          broker() {
             local oidc="$1"
+            local body="$2"
             curl -fsSL -X POST \
               'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
               -H "Authorization: Bearer ${oidc}" \
               -H 'Content-Type: application/json' \
-              --data '{"action":"create"}'
+              --data "$body"
           }
 
           OIDC="$(token)"
-          A="$(create_account "$OIDC")"
-          B="$(create_account "$OIDC")"
+          # Remove any inaccessible private palm objects left by a previously interrupted
+          # E2E run before creating new accounts. The broker only sweeps UUID folders
+          # whose auth.users owner no longer exists.
+          broker "$OIDC" '{"action":"sweep_orphans"}' >/dev/null
+
+          A="$(broker "$OIDC" '{"action":"create"}')"
+          B="$(broker "$OIDC" '{"action":"create"}')"
 
           A_ID="$(jq -r '.user_id' <<<"$A")"
           A_EMAIL="$(jq -r '.email' <<<"$A")"
@@ -82,18 +88,21 @@ jobs:
         if: always() && github.event_name == 'pull_request'
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           OIDC="$(curl -fsSL -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value')"
-          for USER_ID in "${COSMIC_E2E_A_ID:-}" "${COSMIC_E2E_B_ID:-}"; do
-            [ -z "$USER_ID" ] && continue
-            BODY="$(jq -nc --arg id "$USER_ID" '{action:"delete",user_id:$id}')"
+          broker() {
             curl -fsSL -X POST \
               'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
               -H "Authorization: Bearer ${OIDC}" \
               -H 'Content-Type: application/json' \
-              --data "$BODY" >/dev/null
+              --data "$1"
+          }
+          for USER_ID in "${COSMIC_E2E_A_ID:-}" "${COSMIC_E2E_B_ID:-}"; do
+            [ -z "$USER_ID" ] && continue
+            BODY="$(jq -nc --arg id "$USER_ID" '{action:"delete",user_id:$id}')"
+            broker "$BODY" >/dev/null
           done
-          exit 0
+          broker '{"action":"sweep_orphans"}' >/dev/null
 
       - name: Upload failure artifacts
         if: failure()
