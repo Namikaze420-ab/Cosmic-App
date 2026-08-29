@@ -29,6 +29,11 @@ async function exerciseAlpha(page) {
   await expect(page.locator('#authGate')).toBeVisible();
   await expect(page.locator('#authToggle')).toBeVisible();
   await expect(page.locator('#demoMode')).toBeVisible();
+  await expect(page.locator('#forgotPassword')).toBeVisible();
+
+  // Recovery control validates locally and must not send a request without an email.
+  await page.locator('#forgotPassword').click();
+  await expect(page.locator('#authMsg')).toContainText('Enter the email address');
 
   // Authentication mode control must respond immediately.
   await page.locator('#authToggle').click();
@@ -48,7 +53,7 @@ async function exerciseAlpha(page) {
   await page.locator('#authEmail').fill('qa-nonexistent@example.com');
   await page.locator('#authPassword').fill('not-a-real-password');
   await page.locator('#authSubmit').click();
-  await expect(page.locator('#authMsg')).not.toHaveText(/^(|Signing in…)$/, { timeout: 15000 });
+  await expect(page.locator('#authMsg')).toContainText(/not accepted|Forgot password/i, { timeout: 15000 });
   client.ignoreExpectedAuth400 = false;
 
   // Demo mode must dismiss the auth overlay and reveal a functional app.
