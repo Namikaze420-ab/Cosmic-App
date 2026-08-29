@@ -58,24 +58,13 @@
 ## Alpha 2.8 E2E quality gate
 GitHub Actions uses GitHub OIDC rather than stored test credentials. The trusted `staging` pull-request workflow creates two short-lived confirmed Supabase users with generated masked passwords, executes browser/live-data QA, removes private Storage objects first, deletes the auth identities, then sweeps orphan palm objects.
 
-**Verified implementation gate: 16/16 Playwright tests passed in 37.1 seconds.**
+**Implementation gate: 16/16 Playwright tests passed in 37.1 seconds before this documentation-only checkpoint commit. The exact final staging SHA must pass the same suite before Alpha 2.8 is declared frozen.**
 
-Alpha 2.8 adds explicit coverage for:
-- future-date creation in demo mode
-- future plan visibility/counts in the month calendar
-- selected-day plan rendering
-- task editing and rescheduling
-- weekly workload count/hour calculations
-- local persistence across demo reload
-- real signed-in future plan creation through Supabase
-- database date persistence
-- edit persistence through Supabase
-- browser reload persistence for future plans
-- UI deletion followed by database deletion verification
+Alpha 2.8 adds explicit coverage for future-date creation, month plan counts, selected-day rendering, task editing/rescheduling, weekly workload calculations, demo reload persistence, real signed-in Supabase future-plan create/edit/reload/delete persistence, and database deletion verification.
 
 The full suite also continues to cover desktop/mobile core behavior, authentication/password rules, birth timezone/coordinates, astrology, Google Calendar safety boundaries, notification/Web Push foundations, cross-user RLS isolation, private palm storage/consent, diagnostics opt-in/out, account export/deletion, accessibility/performance budgets, and push-dispatch fail-closed behavior.
 
-Post-run cleanup verification:
+Post-run cleanup verification from the implementation gate:
 - disposable E2E auth users: **0**
 - orphan `palm-uploads` objects: **0**
 
