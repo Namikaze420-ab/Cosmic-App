@@ -136,14 +136,21 @@
       }
 
       state.palmReadings = [reading, ...(state.palmReadings || [])];
-      status.textContent = 'Private upload complete. No AI processing has been started.';
       input.value = '';
+      // renderInsights replaces this entire section. Re-query the live status node
+      // after rendering so assistive/live status and visible feedback are not lost.
       renderInsights();
+      const liveStatus = document.querySelector('#palmUploadStatus');
+      if (liveStatus) liveStatus.textContent = 'Private upload complete. No AI processing was triggered.';
+      toast('Palm image stored privately');
     } catch (error) {
-      status.textContent = error?.message || 'Palm image upload failed.';
+      const liveStatus = document.querySelector('#palmUploadStatus') || status;
+      liveStatus.textContent = error?.message || 'Palm image upload failed.';
     } finally {
-      button.disabled = false;
-      input.disabled = false;
+      const liveButton = document.querySelector('#uploadPalmBtn');
+      const liveInput = document.querySelector('#palmFileInput');
+      if (liveButton) liveButton.disabled = false;
+      if (liveInput) liveInput.disabled = false;
     }
   }
 
