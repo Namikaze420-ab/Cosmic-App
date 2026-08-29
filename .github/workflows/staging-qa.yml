@@ -1,11 +1,13 @@
 name: Staging Browser QA
 
 on:
-  push:
-    branches: [staging]
   pull_request:
-    branches: [main, staging]
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: cosmic-staging-browser-qa
+  cancel-in-progress: true
 
 permissions:
   contents: read
