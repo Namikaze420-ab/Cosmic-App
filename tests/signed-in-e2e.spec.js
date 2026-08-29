@@ -17,7 +17,7 @@ const ASTRO_FIXTURE = Object.freeze({
 });
 
 async function waitSdk(page) {
-  await expect.poll(async () => page.evaluate(() => Boolean(window.supabase && window.CosmicAstrology)), { timeout: 20000 }).toBe(true);
+  await expect.poll(async () => page.evaluate(() => Boolean(window.supabase && window.CosmicAstrology && window.CosmicPalmAI && window.CosmicDiagnostics)), { timeout: 20000 }).toBe(true);
 }
 
 async function signIn(page, account) {
@@ -98,8 +98,6 @@ async function assertAstrology(page) {
   expect(result.houses.system).toBe('equal_house');
   expect(result.houses.cusps).toHaveLength(12);
   expect(result.houses.cusps[0].longitude).toBeCloseTo(result.ascendant.longitude, 5);
-  // Synthetic Greenwich reference vector independently cross-checked against
-  // Swiss Ephemeris Equal House output before being fixed into this regression test.
   expect(result.ascendant.sign).toBe(ASTRO_FIXTURE.expectedAscendantSign);
   expect(result.ascendant.degree_in_sign).toBeCloseTo(ASTRO_FIXTURE.expectedAscendantDegree, 2);
   expect(result.planets.Sun.equal_house).toBeGreaterThanOrEqual(1);
@@ -108,18 +106,66 @@ async function assertAstrology(page) {
   await expect(card).toContainText('This is not Placidus');
 }
 
-async function palmRoundTrip(page) {
+async function palmConsentRoundTrip(page) {
   await page.locator('[data-page="insights"]:visible').first().click();
   await expect(page.locator('#palmAlpha2Section')).toBeVisible();
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2n0kAAAAASUVORK5CYII=', 'base64');
   await page.locator('#palmFileInput').setInputFiles({ name: `e2e-${runTag}.png`, mimeType: 'image/png', buffer: png });
   await page.locator('#uploadPalmBtn').click();
   await expect(page.locator('#palmUploadStatus')).toContainText('Private upload complete', { timeout: 20000 });
+
   const rows = await dbRows(page, 'palm_readings', 'id,storage_path,status');
   expect(rows).toHaveLength(1);
   expect(rows[0].status).toBe('uploaded');
-  await page.locator(`[data-delete-palm="${rows[0].id}"]`).click();
+  const id = rows[0].id;
+  const panel = page.locator(`[data-palm-ai-panel="${id}"]`);
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Uploading an image does not grant AI permission');
+
+  await panel.locator('input[type="checkbox"]').check();
+  await panel.locator('select').selectOption('7');
+  await panel.locator('[data-grant-palm-ai]').click();
+  await expect(page.locator(`[data-palm-ai-status="${id}"]`)).toContainText('Consent recorded', { timeout: 15000 });
+  await expect.poll(async () => {
+    const events = await dbRows(page, 'palm_processing_consent_events', 'reading_id,action,retention_days,consent_version');
+    return events.some(event => event.reading_id === id && event.action === 'grant' && event.retention_days === 7 && event.consent_version === 'palm-ai-consent-v1');
+  }).toBe(true);
+
+  await page.locator(`[data-revoke-palm-ai="${id}"]`).click();
+  await expect(page.locator(`[data-palm-ai-status="${id}"]`)).toContainText('withdrawn', { timeout: 15000 });
+  await expect.poll(async () => {
+    const events = await dbRows(page, 'palm_processing_consent_events', 'reading_id,action');
+    return events.filter(event => event.reading_id === id).some(event => event.action === 'revoke');
+  }).toBe(true);
+
+  await page.locator(`[data-delete-palm="${id}"]`).click();
   await expect.poll(async () => (await dbRows(page, 'palm_readings', 'id')).length, { timeout: 15000 }).toBe(0);
+  await expect.poll(async () => (await dbRows(page, 'palm_processing_consent_events', 'id')).length, { timeout: 15000 }).toBe(0);
+}
+
+async function diagnosticsRoundTrip(page) {
+  await page.locator('[data-page="profile"]:visible').first().click();
+  await expect(page.locator('#diagnosticsAlpha27')).toBeVisible();
+  const toggle = page.locator('#diagnosticsOptIn');
+  await expect(toggle).not.toBeChecked();
+
+  const blocked = await page.evaluate(() => window.CosmicDiagnostics.report('js_error', 'alpha27-private-raw-material-blocked'));
+  expect(blocked).toBe(false);
+
+  await toggle.check();
+  await expect.poll(async () => {
+    const rows = await dbRows(page, 'user_preferences', 'diagnostics_opt_in');
+    return rows[0]?.diagnostics_opt_in === true;
+  }, { timeout: 10000 }).toBe(true);
+
+  const inserted = await page.evaluate(() => window.CosmicDiagnostics.report('js_error', 'alpha27-private-raw-material'));
+  expect(inserted).toBe(true);
+
+  await toggle.uncheck();
+  await expect.poll(async () => {
+    const rows = await dbRows(page, 'user_preferences', 'diagnostics_opt_in');
+    return rows[0]?.diagnostics_opt_in === false;
+  }, { timeout: 10000 }).toBe(true);
 }
 
 async function exportRoundTrip(page, expectedPlannerTitle) {
@@ -131,8 +177,12 @@ async function exportRoundTrip(page, expectedPlannerTitle) {
   expect(path).toBeTruthy();
   const parsed = JSON.parse(await fs.readFile(path, 'utf8'));
   const serialized = JSON.stringify(parsed);
+  expect(parsed.export_version).toBe('alpha2-v2');
   expect(serialized).toContain(expectedPlannerTitle);
-  expect(serialized).not.toMatch(/encrypted_refresh_token|client_secret|service_role/i);
+  expect(Array.isArray(parsed.privacy_safe_diagnostics)).toBe(true);
+  expect(parsed.privacy_safe_diagnostics.length).toBeGreaterThanOrEqual(1);
+  expect(serialized).not.toContain('alpha27-private-raw-material');
+  expect(serialized).not.toMatch(/encrypted_refresh_token|client_secret|service_role|p256dh|auth_key/i);
   await expect(page.locator('#privacyStatus')).toContainText('Export downloaded');
 }
 
@@ -147,10 +197,10 @@ async function deleteAccountThroughUi(page) {
   await expect(page.locator('#authGate')).toBeVisible({ timeout: 10000 });
 }
 
-test.describe.serial('Cosmic Planner Alpha 2.6 signed-in E2E', () => {
+test.describe.serial('Cosmic Planner Alpha 2.7 signed-in E2E', () => {
   test.skip(!enabled, 'Disposable E2E accounts are supplied only by the staging GitHub OIDC workflow.');
 
-  test('real persistence, RLS isolation, astrology, private storage, export and deletion', async ({ browser }) => {
+  test('real persistence, RLS, astrology, explicit palm consent, diagnostics, export and deletion', async ({ browser }) => {
     const titleA = `RLS-A-${runTag}`;
     const diaryA = `Diary-A-${runTag}`;
     const titleB = `RLS-B-${runTag}`;
@@ -174,7 +224,8 @@ test.describe.serial('Cosmic Planner Alpha 2.6 signed-in E2E', () => {
 
     await createPlannerItem(pageB, titleB);
     await assertAstrology(pageB);
-    await palmRoundTrip(pageB);
+    await palmConsentRoundTrip(pageB);
+    await diagnosticsRoundTrip(pageB);
     await exportRoundTrip(pageB, titleB);
     await deleteAccountThroughUi(pageB);
     await contextB.close();
