@@ -17,6 +17,13 @@ async function signIn(page, account) {
   await page.locator('#authPassword').fill(account.password);
   await page.locator('#authSubmit').click();
   await expect.poll(async () => page.evaluate(() => Boolean(state.user?.id)), { timeout: 20000 }).toBe(true);
+  // Authentication sets state.user before loadData() finishes. Wait until the app
+  // has made its post-auth decision: onboarding for a new account or the app shell.
+  await expect.poll(async () => page.evaluate(() => {
+    const onboard = document.querySelector('#onboardWrap');
+    const shell = document.querySelector('.app-shell');
+    return Boolean((onboard && !onboard.hidden) || (shell && !shell.hidden));
+  }), { timeout: 20000 }).toBe(true);
 }
 
 async function onboard(page, name) {
@@ -96,7 +103,7 @@ async function palmRoundTrip(page) {
   await page.locator('#palmFileInput').setInputFiles({ name: `e2e-${runTag}.png`, mimeType: 'image/png', buffer: png });
   await page.locator('#uploadPalmBtn').click();
   await expect(page.locator('#palmUploadStatus')).toContainText('Private upload complete', { timeout: 20000 });
-  let rows = await dbRows(page, 'palm_readings', 'id,storage_path,status');
+  const rows = await dbRows(page, 'palm_readings', 'id,storage_path,status');
   expect(rows).toHaveLength(1);
   expect(rows[0].status).toBe('uploaded');
   await page.locator(`[data-delete-palm="${rows[0].id}"]`).click();
@@ -150,7 +157,6 @@ test.describe.serial('Cosmic Planner Alpha 2.6 signed-in E2E', () => {
     const pageB = await contextB.newPage();
     await ensureReady(pageB, 'E2E User B');
 
-    // Real user-B JWT + RLS must not expose user-A rows.
     expect((await dbRows(pageB, 'planner_items', 'title')).some(row => row.title === titleA)).toBe(false);
     expect((await dbRows(pageB, 'diary_entries', 'title')).some(row => row.title === diaryA)).toBe(false);
 
