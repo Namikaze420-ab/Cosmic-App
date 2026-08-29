@@ -24,7 +24,7 @@ test.describe('Cosmic Planner Alpha 2 astrology foundation', () => {
     await expect(page.locator('#pBirthLatitude')).toBeVisible();
     await expect(page.locator('#pBirthLongitude')).toBeVisible();
     await expect(page.locator('#pBirthTimezone')).not.toHaveValue('');
-    await expect(page.locator('#onboardWrap')).toContainText('Ascendant/house');
+    await expect(page.locator('#onboardWrap')).toContainText('Ascendant and Equal House');
   });
 
   test('demo mode never fabricates astrology results', async ({ page }) => {
