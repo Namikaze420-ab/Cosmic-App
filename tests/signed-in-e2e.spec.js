@@ -5,6 +5,16 @@ const A = { email: process.env.COSMIC_E2E_A_EMAIL, password: process.env.COSMIC_
 const B = { email: process.env.COSMIC_E2E_B_EMAIL, password: process.env.COSMIC_E2E_B_PASSWORD };
 const enabled = Boolean(A.email && A.password && B.email && B.password);
 const runTag = process.env.GITHUB_RUN_ID || String(Date.now());
+const ASTRO_FIXTURE = Object.freeze({
+  date: '2000-01-01',
+  time: '12:00',
+  place: 'Greenwich reference fixture',
+  timezone: 'UTC',
+  latitude: '51.4779',
+  longitude: '0.0000',
+  expectedAscendantSign: 'Aries',
+  expectedAscendantDegree: 24.2662,
+});
 
 async function waitSdk(page) {
   await expect.poll(async () => page.evaluate(() => Boolean(window.supabase && window.CosmicAstrology)), { timeout: 20000 }).toBe(true);
@@ -17,8 +27,6 @@ async function signIn(page, account) {
   await page.locator('#authPassword').fill(account.password);
   await page.locator('#authSubmit').click();
   await expect.poll(async () => page.evaluate(() => Boolean(state.user?.id)), { timeout: 20000 }).toBe(true);
-  // Authentication sets state.user before loadData() finishes. Wait until the app
-  // has made its post-auth decision: onboarding for a new account or the app shell.
   await expect.poll(async () => page.evaluate(() => {
     const onboard = document.querySelector('#onboardWrap');
     const shell = document.querySelector('.app-shell');
@@ -29,12 +37,12 @@ async function signIn(page, account) {
 async function onboard(page, name) {
   await expect(page.locator('#onboardWrap')).toBeVisible({ timeout: 15000 });
   await page.locator('#pName').fill(name);
-  await page.locator('#pDate').fill('1995-03-15');
-  await page.locator('#pTime').fill('02:25');
-  await page.locator('#pPlace').fill('Mahebourg, Mauritius');
-  await page.locator('#pBirthTimezone').fill('Indian/Mauritius');
-  await page.locator('#pBirthLatitude').fill('-20.4081');
-  await page.locator('#pBirthLongitude').fill('57.7000');
+  await page.locator('#pDate').fill(ASTRO_FIXTURE.date);
+  await page.locator('#pTime').fill(ASTRO_FIXTURE.time);
+  await page.locator('#pPlace').fill(ASTRO_FIXTURE.place);
+  await page.locator('#pBirthTimezone').fill(ASTRO_FIXTURE.timezone);
+  await page.locator('#pBirthLatitude').fill(ASTRO_FIXTURE.latitude);
+  await page.locator('#pBirthLongitude').fill(ASTRO_FIXTURE.longitude);
   await page.locator('#pConsent').check();
   await page.locator('#onboardForm button[type="submit"]').click();
   await expect(page.locator('#onboardWrap')).toBeHidden({ timeout: 20000 });
@@ -90,6 +98,10 @@ async function assertAstrology(page) {
   expect(result.houses.system).toBe('equal_house');
   expect(result.houses.cusps).toHaveLength(12);
   expect(result.houses.cusps[0].longitude).toBeCloseTo(result.ascendant.longitude, 5);
+  // Synthetic Greenwich reference vector independently cross-checked against
+  // Swiss Ephemeris Equal House output before being fixed into this regression test.
+  expect(result.ascendant.sign).toBe(ASTRO_FIXTURE.expectedAscendantSign);
+  expect(result.ascendant.degree_in_sign).toBeCloseTo(ASTRO_FIXTURE.expectedAscendantDegree, 2);
   expect(result.planets.Sun.equal_house).toBeGreaterThanOrEqual(1);
   expect(result.planets.Sun.equal_house).toBeLessThanOrEqual(12);
   await expect(card).toContainText('Equal House');
@@ -147,7 +159,7 @@ test.describe.serial('Cosmic Planner Alpha 2.6 signed-in E2E', () => {
     const pageA = await contextA.newPage();
     await ensureReady(pageA, 'E2E User A');
     await createPlannerItem(pageA, titleA);
-    await createDiary(pageA, diaryA, `Private A content ${runTag}`);
+    await createDiary(pageA, diaryA, `Private synthetic test content ${runTag}`);
     await assertAstrology(pageA);
     await pageA.reload({ waitUntil: 'domcontentloaded' });
     await expect.poll(async () => (await dbRows(pageA, 'planner_items', 'title')).some(r => r.title === titleA), { timeout: 15000 }).toBe(true);
