@@ -61,8 +61,9 @@
   }
 
   function patchLabels() {
+    const authLabel = 'COSMIC PLANNER · ALPHA 2 FOUNDATION';
     const authEyebrow = document.querySelector('#authGate .eyebrow');
-    if (authEyebrow) authEyebrow.textContent = 'COSMIC PLANNER · ALPHA 2 FOUNDATION';
+    if (authEyebrow && authEyebrow.textContent !== authLabel) authEyebrow.textContent = authLabel;
     const topEyebrow = document.querySelector('#pageEyebrow');
     if (topEyebrow?.textContent === 'ALPHA 1') topEyebrow.textContent = 'ALPHA 2 FOUNDATION';
   }
