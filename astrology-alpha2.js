@@ -14,25 +14,33 @@
     }
   }
 
+  function parseCoordinates(latitudeValue, longitudeValue) {
+    const latitudeText = String(latitudeValue ?? '').trim();
+    const longitudeText = String(longitudeValue ?? '').trim();
+    if (!latitudeText && !longitudeText) return { valid: true, latitude: null, longitude: null };
+    if (!latitudeText || !longitudeText) return { valid: false, error: 'Enter both birth latitude and longitude, or leave both blank.' };
+
+    const latitude = Number(latitudeText);
+    const longitude = Number(longitudeText);
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+      return { valid: false, error: 'Birth latitude must be between -90 and 90.' };
+    }
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      return { valid: false, error: 'Birth longitude must be between -180 and 180.' };
+    }
+    return { valid: true, latitude, longitude };
+  }
+
   function partsAt(date, timeZone) {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
     }).formatToParts(date);
     const value = (type) => Number(parts.find((part) => part.type === type)?.value || 0);
     return {
-      year: value('year'),
-      month: value('month'),
-      day: value('day'),
-      hour: value('hour'),
-      minute: value('minute'),
-      second: value('second'),
+      year: value('year'), month: value('month'), day: value('day'),
+      hour: value('hour'), minute: value('minute'), second: value('second'),
     };
   }
 
@@ -48,15 +56,12 @@
 
     const target = Date.UTC(year, month - 1, day, hour, minute, second);
     let guess = target;
-
-    // Iterate because the zone offset can depend on the instant (DST/historical rules).
     for (let i = 0; i < 4; i += 1) {
       const rendered = asEpoch(partsAt(new Date(guess), timeZone));
       const correction = target - rendered;
       guess += correction;
       if (Math.abs(correction) < 1000) break;
     }
-
     return new Date(guess).toISOString();
   }
 
@@ -73,17 +78,27 @@
     const birthTime = document.querySelector('#pTime');
     if (!form || !birthTime || document.querySelector('#pBirthTimezone')) return;
 
-    const label = document.createElement('label');
-    label.innerHTML = `Birth timezone<input id="pBirthTimezone" maxlength="80" autocomplete="off" placeholder="e.g. Indian/Mauritius">`;
-    birthTime.closest('label')?.after(label);
+    const timezoneLabel = document.createElement('label');
+    timezoneLabel.innerHTML = `Birth timezone<input id="pBirthTimezone" maxlength="80" autocomplete="off" placeholder="e.g. Indian/Mauritius">`;
+    birthTime.closest('label')?.after(timezoneLabel);
+    document.querySelector('#pBirthTimezone').value = state.profile?.birth_timezone || state.profile?.timezone || browserZone();
 
-    const input = document.querySelector('#pBirthTimezone');
-    input.value = state.profile?.birth_timezone || state.profile?.timezone || browserZone();
+    const latitudeLabel = document.createElement('label');
+    latitudeLabel.innerHTML = `Birth latitude<input id="pBirthLatitude" type="number" inputmode="decimal" step="any" min="-90" max="90" placeholder="e.g. -20.4081">`;
+    const longitudeLabel = document.createElement('label');
+    longitudeLabel.innerHTML = `Birth longitude<input id="pBirthLongitude" type="number" inputmode="decimal" step="any" min="-180" max="180" placeholder="e.g. 57.7000">`;
+    timezoneLabel.after(longitudeLabel);
+    timezoneLabel.after(latitudeLabel);
+
+    const lat = document.querySelector('#pBirthLatitude');
+    const lon = document.querySelector('#pBirthLongitude');
+    lat.value = state.profile?.birth_latitude ?? '';
+    lon.value = state.profile?.birth_longitude ?? '';
 
     const note = document.createElement('p');
     note.className = 'auth-note wide';
-    note.textContent = 'Birth timezone is required to convert your local birth time to UTC for astronomical calculations. Houses and Ascendant remain disabled until birth coordinates are implemented.';
-    label.after(note);
+    note.textContent = 'Birth timezone is required for the UTC timestamp. Latitude and longitude are optional for now, but both are required before a future Ascendant/house calculation can be enabled. Coordinates remain private in your profile.';
+    longitudeLabel.after(note);
   }
 
   showOnboarding = function alpha2ShowOnboarding() {
@@ -100,12 +115,23 @@
       return;
     }
 
+    const coordinates = parseCoordinates(
+      document.querySelector('#pBirthLatitude')?.value,
+      document.querySelector('#pBirthLongitude')?.value,
+    );
+    if (!coordinates.valid) {
+      document.querySelector('#onboardMsg').textContent = coordinates.error;
+      return;
+    }
+
     const row = {
       display_name: document.querySelector('#pName').value.trim(),
       birth_date: document.querySelector('#pDate').value,
       birth_time: document.querySelector('#pTime').value || null,
       birth_place: document.querySelector('#pPlace').value.trim() || null,
       birth_timezone: birthTimezone,
+      birth_latitude: coordinates.latitude,
+      birth_longitude: coordinates.longitude,
       timezone: browserZone(),
       onboarding_completed: true,
     };
@@ -140,7 +166,6 @@
       state.astrology = { status: 'auth_required' };
       return null;
     }
-
     if (!force && state.astrology?.status === 'ready') return state.astrology.data;
 
     const profile = state.profile;
@@ -162,9 +187,7 @@
     if (state.page === 'insights') renderInsights();
 
     try {
-      const { data, error } = await sb.functions.invoke('astrology-calc', {
-        body: { timestamp_utc: timestamp },
-      });
+      const { data, error } = await sb.functions.invoke('astrology-calc', { body: { timestamp_utc: timestamp } });
       if (error) throw error;
       if (!data?.planets?.Sun || !data?.planets?.Moon) throw new Error('Incomplete astrology response');
       state.astrology = { status: 'ready', data };
@@ -178,37 +201,32 @@
     }
   }
 
+  function coordinatesReady() {
+    return Number.isFinite(Number(state.profile?.birth_latitude)) && Number.isFinite(Number(state.profile?.birth_longitude));
+  }
+
   function astrologyCard() {
     const astro = state.astrology;
     if (state.mode === 'demo') {
-      return {
-        value: '—',
-        sub: 'Sign in required',
-        copy: 'Real natal positions are calculated by an authenticated server-side astronomy function. Demo mode does not fabricate astrology results.',
-      };
+      return { value: '—', sub: 'Sign in required', copy: 'Real natal positions are calculated by an authenticated server-side astronomy function. Demo mode does not fabricate astrology results.' };
     }
     if (!state.profile?.birth_time) {
-      return {
-        value: '—',
-        sub: 'Birth time required',
-        copy: 'Add your birth time and birth timezone to calculate the planetary positions accurately enough for this Alpha stage.',
-      };
+      return { value: '—', sub: 'Birth time required', copy: 'Add your birth time and birth timezone to calculate the planetary positions accurately enough for this Alpha stage.' };
     }
-    if (astro?.status === 'loading') {
-      return { value: '…', sub: 'Calculating', copy: 'Computing geocentric tropical planetary positions from your saved birth timestamp.' };
-    }
-    if (astro?.status === 'error') {
-      return { value: '!', sub: 'Calculation unavailable', copy: 'The astrology service could not complete this request. Your Numerology and Chinese Zodiac scores are unaffected.' };
-    }
+    if (astro?.status === 'loading') return { value: '…', sub: 'Calculating', copy: 'Computing geocentric tropical planetary positions from your saved birth timestamp.' };
+    if (astro?.status === 'error') return { value: '!', sub: 'Calculation unavailable', copy: 'The astrology service could not complete this request. Your Numerology and Chinese Zodiac scores are unaffected.' };
     if (astro?.status === 'ready') {
       const planets = astro.data.planets;
       const compact = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
         .map((name) => `${name} ${planets[name]?.sign || '—'} ${planets[name]?.degree_in_sign?.toFixed?.(1) || '—'}°`)
         .join(' · ');
+      const coordinateState = coordinatesReady()
+        ? 'Birth coordinates are stored and ready for the dedicated Ascendant/house engine.'
+        : 'Add both birth coordinates before Ascendant/houses can be enabled.';
       return {
         value: `${planets.Sun.sign}`,
         sub: `Sun ${planets.Sun.degree_in_sign.toFixed(1)}° · Moon ${planets.Moon.sign} ${planets.Moon.degree_in_sign.toFixed(1)}°`,
-        copy: `${compact}. Tropical geocentric positions calculated with Astronomy Engine 2.1.19. Houses and Ascendant are intentionally not calculated yet.`,
+        copy: `${compact}. Tropical geocentric positions calculated with Astronomy Engine 2.1.19. ${coordinateState} Houses are not being fabricated in this build.`,
       };
     }
     return { value: '…', sub: 'Astrology Alpha 2', copy: 'Open this tab while signed in to calculate your natal planetary positions.' };
@@ -221,10 +239,7 @@
     if (!card) return;
     const result = astrologyCard();
     card.innerHTML = `
-      <div class="module-head">
-        <div><span class="eyebrow">Astrology · Alpha 2</span><h3 style="margin:6px 0 0">Astronomical positions</h3></div>
-        <span class="module-icon">☾</span>
-      </div>
+      <div class="module-head"><div><span class="eyebrow">Astrology · Alpha 2</span><h3 style="margin:6px 0 0">Astronomical positions</h3></div><span class="module-icon">☾</span></div>
       <div class="module-value" style="font-size:${result.value.length > 8 ? '30px' : '42px'}">${esc(result.value)}</div>
       <div class="module-sub">${esc(result.sub)}</div>
       <p class="module-copy">${esc(result.copy)}</p>
@@ -236,26 +251,30 @@
   renderProfile = function alpha2RenderProfile() {
     originalRenderProfile();
     const rows = document.querySelector('#page-profile .status-list');
-    if (rows && !document.querySelector('#birthTimezoneStatus')) {
+    if (!rows) return;
+    if (!document.querySelector('#birthTimezoneStatus')) {
       const row = document.createElement('div');
       row.id = 'birthTimezoneStatus';
       row.className = 'status-row';
       row.innerHTML = `<span>Birth timezone</span><b>${esc(state.profile?.birth_timezone || state.profile?.timezone || 'Not set')}</b>`;
       rows.appendChild(row);
     }
+    if (!document.querySelector('#birthCoordinatesStatus')) {
+      const coordinateRow = document.createElement('div');
+      coordinateRow.id = 'birthCoordinatesStatus';
+      coordinateRow.className = 'status-row';
+      coordinateRow.innerHTML = `<span>Birth coordinates</span><b>${coordinatesReady() ? `${Number(state.profile.birth_latitude).toFixed(4)}, ${Number(state.profile.birth_longitude).toFixed(4)}` : 'Not set'}</b>`;
+      rows.appendChild(coordinateRow);
+    }
   };
 
   enterApp = function alpha2EnterApp() {
     originalEnterApp();
     patchLabels();
-    if (state.mode === 'demo') {
-      state.astrology = { status: 'auth_required' };
-    } else {
-      void calculateNatalAstrology(false);
-    }
+    if (state.mode === 'demo') state.astrology = { status: 'auth_required' };
+    else void calculateNatalAstrology(false);
   };
 
-  // Patch an onboarding view that may have been rendered while the Supabase SDK was loading.
   const observer = new MutationObserver(() => {
     if (document.querySelector('#onboardForm')) enhanceOnboarding();
     patchLabels();
@@ -265,6 +284,7 @@
   window.CosmicAstrology = Object.freeze({
     localBirthToUtc,
     validTimeZone,
+    parseCoordinates,
     calculate: (force = true) => calculateNatalAstrology(force),
   });
   patchLabels();
