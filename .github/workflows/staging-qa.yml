@@ -32,6 +32,23 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Verify push dispatcher fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/push-dispatch-response.json -w '%{http_code}' -X POST \
+            'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/push-reminder-dispatch' \
+            -H 'Content-Type: application/json' \
+            --data '{}')"
+          case "$code" in
+            401|423|503) ;;
+            *)
+              echo "Expected fail-closed dispatcher status, got HTTP $code"
+              cat /tmp/push-dispatch-response.json || true
+              exit 1
+              ;;
+          esac
+
       - name: Create disposable signed-in E2E accounts
         if: github.event_name == 'pull_request'
         shell: bash
