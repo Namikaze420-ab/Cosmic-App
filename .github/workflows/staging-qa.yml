@@ -16,7 +16,7 @@ permissions:
 jobs:
   browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +29,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Verify push dispatcher fails closed
         shell: bash
@@ -70,9 +70,6 @@ jobs:
           }
 
           OIDC="$(token)"
-          # Remove any inaccessible private palm objects left by a previously interrupted
-          # E2E run before creating new accounts. The broker only sweeps UUID folders
-          # whose auth.users owner no longer exists.
           broker "$OIDC" '{"action":"sweep_orphans"}' >/dev/null
 
           A="$(broker "$OIDC" '{"action":"create"}')"
@@ -98,8 +95,11 @@ jobs:
             echo "COSMIC_E2E_B_PASSWORD=$B_PASSWORD"
           } >> "$GITHUB_ENV"
 
-      - name: Run desktop, mobile and signed-in browser QA
+      - name: Run Chromium deep QA
         run: npm run test:qa
+
+      - name: Run Firefox and WebKit release matrix
+        run: npm run test:release
 
       - name: Delete disposable E2E accounts
         if: always() && github.event_name == 'pull_request'
