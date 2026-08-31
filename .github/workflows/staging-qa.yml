@@ -15,8 +15,9 @@ permissions:
 
 jobs:
   browser-qa:
+    name: Chromium deep QA
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Verify push dispatcher fails closed
         shell: bash
@@ -98,9 +99,6 @@ jobs:
       - name: Run Chromium deep QA
         run: npm run test:qa
 
-      - name: Run Firefox and WebKit release matrix
-        run: npm run test:release
-
       - name: Delete disposable E2E accounts
         if: always() && github.event_name == 'pull_request'
         shell: bash
@@ -121,11 +119,44 @@ jobs:
           done
           broker '{"action":"sweep_orphans"}' >/dev/null
 
-      - name: Upload failure artifacts
+      - name: Upload Chromium failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-failure-artifacts
+          name: playwright-chromium-failure-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+  release-matrix:
+    name: Firefox and WebKit release QA
+    needs: browser-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Run Firefox and WebKit release matrix
+        run: npm run test:release
+
+      - name: Upload release-matrix failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-release-failure-artifacts
           path: |
             test-results/
             playwright-report/
