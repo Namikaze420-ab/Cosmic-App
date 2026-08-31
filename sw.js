@@ -1,5 +1,5 @@
-const CACHE='cosmic-planner-alpha2-v8';
-const CORE=['./','./index.html','./styles.css?v=alpha2-8','./alpha-fix.css?v=alpha2-8','./alpha27-quality.css?v=alpha2-8','./planner-alpha28.css?v=alpha2-8','./app.js?v=alpha2-8','./rpc-fix.js?v=alpha2-8','./auth-fix.js?v=alpha2-8','./password-policy.js?v=alpha2-8','./astrology-alpha2.js?v=alpha2-8','./notifications-alpha2.js?v=alpha2-8','./calendar-alpha2.js?v=alpha2-8','./planner-alpha28.js?v=alpha2-8','./planner-alpha28-compat.js?v=alpha2-8','./palm-alpha2.js?v=alpha2-8','./palm-ai-alpha27.js?v=alpha2-8','./privacy-alpha2.js?v=alpha2-8','./push-alpha2.js?v=alpha2-8','./diagnostics-alpha27.js?v=alpha2-8','./manifest.json?v=alpha2-8'];
+const CACHE='cosmic-planner-alpha2-v9';
+const CORE=['./','./index.html','./styles.css?v=alpha2-9','./alpha-fix.css?v=alpha2-9','./alpha27-quality.css?v=alpha2-9','./planner-alpha28.css?v=alpha2-9','./planner-alpha29.css?v=alpha2-9','./app.js?v=alpha2-9','./rpc-fix.js?v=alpha2-9','./auth-fix.js?v=alpha2-9','./password-policy.js?v=alpha2-9','./astrology-alpha2.js?v=alpha2-9','./notifications-alpha2.js?v=alpha2-9','./calendar-alpha2.js?v=alpha2-9','./planner-alpha28.js?v=alpha2-9','./planner-alpha28-compat.js?v=alpha2-9','./planner-alpha29.js?v=alpha2-9','./palm-alpha2.js?v=alpha2-9','./palm-ai-alpha27.js?v=alpha2-9','./privacy-alpha2.js?v=alpha2-9','./push-alpha2.js?v=alpha2-9','./diagnostics-alpha27.js?v=alpha2-9','./manifest.json?v=alpha2-9'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
