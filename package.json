@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "test:qa": "playwright test"
+    "test:qa": "playwright test",
+    "test:release": "playwright test -c playwright.release.config.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0"
