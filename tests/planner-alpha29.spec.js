@@ -98,4 +98,53 @@ test.describe('Cosmic Planner Alpha 2.9 planner workflows', () => {
     await expect(allDay).toContainText('All day');
     await expect(page.locator('.selected-load')).toContainText('0 min timed');
   });
+
+  test('changing only start preserves duration, one-off converts to recurrence, and calendar time counts toward workload', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await enterDemo(page);
+    const day1 = await localDateOffset(page, 8);
+    const day15 = await localDateOffset(page, 22);
+
+    await page.locator('#quickAdd').click();
+    await page.locator('#taskTitle').fill('Alpha29 duration guard');
+    await page.locator('#taskDate').fill(day1);
+    await page.locator('#taskTime').fill('16:10');
+    await expect(page.locator('#taskEndTime')).toHaveValue('17:10');
+    await expect(page.locator('#taskDurationReadout')).toContainText('1h');
+    await page.locator('#taskSubmit').click();
+
+    await selectCalendarDate(page, day1);
+    const task = page.locator('.selected-plan-list .timeline-item').filter({ hasText: 'Alpha29 duration guard' });
+    await expect(task).toContainText('1h');
+    await task.locator('[data-task-action="edit"]').click();
+    await page.locator('#taskRepeat').selectOption('weekly');
+    await page.locator('#taskRepeatUntil').fill(day15);
+    await page.locator('#taskSubmit').click();
+
+    await expect.poll(async () => page.evaluate(() => {
+      const rows = state.tasks.filter(item => item.title === 'Alpha29 duration guard');
+      return rows.length === 3 && rows.every(item => item.recurrence_rule === 'weekly' && Boolean(item.recurrence_group_id));
+    })).toBe(true);
+
+    await page.evaluate((date) => {
+      const start = new Date(`${date}T08:00:00`);
+      const end = new Date(`${date}T15:00:00`);
+      state.tasks.push({
+        id: crypto.randomUUID(),
+        title: 'Imported meeting block',
+        category: 'work',
+        priority: 'medium',
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        status: 'planned',
+        source: 'google_calendar',
+        all_day: false,
+        reminder_minutes: [],
+      });
+    }, day1);
+    await expect.poll(async () => page.evaluate((date) => window.CosmicPlanner29.workloadForDate(parseDate(date)).timed, day1)).toBe(480);
+    await selectCalendarDate(page, day1);
+    await expect(page.locator('.selected-load')).toContainText('8h timed');
+    await expect(page.locator('.selected-load')).toContainText('Heavy');
+  });
 });
