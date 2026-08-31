@@ -4,13 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111318" />
-  <meta name="description" content="Cosmic Planner Alpha 2.8 staging experience" />
-  <link rel="manifest" href="manifest.json?v=alpha2-8" />
-  <link rel="stylesheet" href="styles.css?v=alpha2-8" />
-  <link rel="stylesheet" href="alpha-fix.css?v=alpha2-8" />
-  <link rel="stylesheet" href="alpha27-quality.css?v=alpha2-8" />
-  <link rel="stylesheet" href="planner-alpha28.css?v=alpha2-8" />
-  <title>Cosmic Planner — Alpha 2.8 Preview</title>
+  <meta name="description" content="Cosmic Planner Alpha 2.9 staging experience" />
+  <link rel="manifest" href="manifest.json?v=alpha2-9" />
+  <link rel="stylesheet" href="styles.css?v=alpha2-9" />
+  <link rel="stylesheet" href="alpha-fix.css?v=alpha2-9" />
+  <link rel="stylesheet" href="alpha27-quality.css?v=alpha2-9" />
+  <link rel="stylesheet" href="planner-alpha28.css?v=alpha2-9" />
+  <link rel="stylesheet" href="planner-alpha29.css?v=alpha2-9" />
+  <title>Cosmic Planner — Alpha 2.9 Preview</title>
 </head>
 <body>
   <div class="app-shell">
@@ -22,12 +23,12 @@
         <div class="mini-score"><strong>--</strong><span>/100</span></div>
         <p>Complete your birth profile to activate scoring.</p>
       </div>
-      <button class="profile-chip" data-page="profile"><span class="avatar">CP</span><span><strong>Cosmic User</strong><small>Alpha 2.8 staging</small></span><span>›</span></button>
+      <button class="profile-chip" data-page="profile"><span class="avatar">CP</span><span><strong>Cosmic User</strong><small>Alpha 2.9 staging</small></span><span>›</span></button>
     </aside>
 
     <main class="main" id="mainContent" tabindex="-1">
       <header class="topbar">
-        <div><span class="eyebrow" id="pageEyebrow">ALPHA 2.8</span><h1 id="pageTitle">Today</h1></div>
+        <div><span class="eyebrow" id="pageEyebrow">ALPHA 2.9</span><h1 id="pageTitle">Today</h1></div>
         <div class="top-actions"><button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button><button class="primary-btn" id="quickAdd">＋ Add plan</button></div>
       </header>
 
@@ -43,32 +44,39 @@
 
   <div class="modal-backdrop" id="modalBackdrop" hidden>
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-head"><div><span class="eyebrow">Planner</span><h2 id="modalTitle">Add to your planner</h2></div><button class="icon-btn" id="closeModal" aria-label="Close">×</button></div>
+      <div class="modal-head"><div><span class="eyebrow">Planner · Alpha 2.9</span><h2 id="modalTitle">Add to your planner</h2></div><button class="icon-btn" id="closeModal" aria-label="Close">×</button></div>
       <form id="taskForm" class="form-grid">
         <label class="field full"><span>Title</span><input id="taskTitle" required maxlength="180" placeholder="What do you want to plan?" /></label>
         <label class="field"><span>Date</span><input id="taskDate" type="date" required /></label>
-        <label class="field"><span>Time</span><input id="taskTime" type="time" value="14:30" required /></label>
+        <label class="field"><span>Schedule</span><span class="schedule-toggle"><input id="taskAllDay" type="checkbox" /> All day</span></label>
+        <label class="field timed-field"><span>Start time</span><input id="taskTime" type="time" value="14:30" required /></label>
+        <label class="field timed-field"><span>End time</span><input id="taskEndTime" type="time" value="15:30" required /><small class="duration-readout" id="taskDurationReadout">Duration · 1h</small></label>
         <label class="field full"><span>Category</span><select id="taskCategory"><option>Work</option><option>Personal</option><option>Finance</option><option>Love</option><option>Wellness</option><option>Social</option><option>Other</option></select></label>
         <label class="field full"><span>Priority</span><div class="segmented"><button type="button" data-priority="Low">Low</button><button type="button" data-priority="Medium" class="selected">Medium</button><button type="button" data-priority="High">High</button></div></label>
+        <label class="field full"><span>Repeat</span><select id="taskRepeat"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekdays">Weekdays</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
+        <label class="field full" id="taskRepeatUntilField" hidden><span>Repeat until</span><input id="taskRepeatUntil" type="date" /><small class="subtle-help">Recurring plans are materialized up to this date, capped at 180 occurrences for safety.</small></label>
+        <label class="field full" id="taskSeriesScopeField" hidden><span>Editing scope</span><select id="taskSeriesScope"><option value="single">This occurrence only</option><option value="future">This and future occurrences</option></select><small class="series-scope-note">Changing the recurrence pattern requires “This and future occurrences”. Past completed occurrences are preserved.</small></label>
+        <fieldset class="field full"><legend>Reminders</legend><div class="reminder-grid" id="taskReminderGroup"><label class="reminder-option"><input type="checkbox" name="taskReminder" value="0" />At time</label><label class="reminder-option"><input type="checkbox" name="taskReminder" value="5" />5 min before</label><label class="reminder-option"><input type="checkbox" name="taskReminder" value="15" checked />15 min before</label><label class="reminder-option"><input type="checkbox" name="taskReminder" value="30" />30 min before</label><label class="reminder-option"><input type="checkbox" name="taskReminder" value="60" />1 hour before</label><label class="reminder-option"><input type="checkbox" name="taskReminder" value="1440" />1 day before</label></div></fieldset>
         <div class="modal-actions full"><button type="button" class="secondary-btn" id="cancelTask">Cancel</button><button class="primary-btn" id="taskSubmit" type="submit">Add to planner</button></div>
       </form>
     </section>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=alpha2-8"></script>
-  <script src="rpc-fix.js?v=alpha2-8"></script>
-  <script src="auth-fix.js?v=alpha2-8"></script>
-  <script src="password-policy.js?v=alpha2-8"></script>
-  <script src="astrology-alpha2.js?v=alpha2-8"></script>
-  <script src="notifications-alpha2.js?v=alpha2-8"></script>
-  <script src="calendar-alpha2.js?v=alpha2-8"></script>
-  <script src="planner-alpha28.js?v=alpha2-8"></script>
-  <script src="planner-alpha28-compat.js?v=alpha2-8"></script>
-  <script src="palm-alpha2.js?v=alpha2-8"></script>
-  <script src="palm-ai-alpha27.js?v=alpha2-8"></script>
-  <script src="privacy-alpha2.js?v=alpha2-8"></script>
-  <script src="push-alpha2.js?v=alpha2-8"></script>
-  <script src="diagnostics-alpha27.js?v=alpha2-8"></script>
+  <script src="app.js?v=alpha2-9"></script>
+  <script src="rpc-fix.js?v=alpha2-9"></script>
+  <script src="auth-fix.js?v=alpha2-9"></script>
+  <script src="password-policy.js?v=alpha2-9"></script>
+  <script src="astrology-alpha2.js?v=alpha2-9"></script>
+  <script src="notifications-alpha2.js?v=alpha2-9"></script>
+  <script src="calendar-alpha2.js?v=alpha2-9"></script>
+  <script src="planner-alpha28.js?v=alpha2-9"></script>
+  <script src="planner-alpha28-compat.js?v=alpha2-9"></script>
+  <script src="planner-alpha29.js?v=alpha2-9"></script>
+  <script src="palm-alpha2.js?v=alpha2-9"></script>
+  <script src="palm-ai-alpha27.js?v=alpha2-9"></script>
+  <script src="privacy-alpha2.js?v=alpha2-9"></script>
+  <script src="push-alpha2.js?v=alpha2-9"></script>
+  <script src="diagnostics-alpha27.js?v=alpha2-9"></script>
 </body>
 </html>
