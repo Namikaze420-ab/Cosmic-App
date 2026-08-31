@@ -50,8 +50,26 @@ test.describe('Cosmic Planner Alpha 3.0 release matrix', () => {
     await expect(page.locator('#page-profile')).toBeVisible();
   });
 
-  test('responsive shell and planner modal stay inside the viewport', async ({ page }) => {
+  test('responsive shell, planner modal and PWA metadata are release-safe', async ({ page }) => {
     await enterDemo(page);
+
+    const pwa = await page.evaluate(async () => {
+      const manifestLink = document.querySelector('link[rel="manifest"]');
+      const manifest = await fetch(manifestLink.href).then(response => response.json());
+      const icon = manifest.icons?.[0];
+      const iconStatus = icon ? await fetch(new URL(icon.src, manifestLink.href)).then(response => response.status) : 0;
+      return {
+        display: manifest.display,
+        hasScope: Boolean(manifest.scope),
+        iconCount: manifest.icons?.length || 0,
+        iconStatus,
+      };
+    });
+    expect(pwa.display).toBe('standalone');
+    expect(pwa.hasScope).toBe(true);
+    expect(pwa.iconCount).toBeGreaterThan(0);
+    expect(pwa.iconStatus).toBe(200);
+
     await page.locator('#quickAdd').click();
     await expect(page.locator('#modalBackdrop')).toBeVisible();
 
