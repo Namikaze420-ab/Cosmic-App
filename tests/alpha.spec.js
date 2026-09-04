@@ -100,8 +100,8 @@ async function exerciseAlpha(page) {
   await expect(page.locator('.hero-card')).toHaveCount(1);
 
   // Main navigation. Use the visible nav so the same test works on desktop sidebar
-  // and mobile bottom navigation.
-  for (const [id, title] of [['calendar','Calendar'],['diary','Diary'],['insights','Insights'],['profile','Profile'],['home','Today']]) {
+  // and mobile bottom navigation. Alpha 3.1 intentionally uses product-first labels.
+  for (const [id, title] of [['calendar','Plan'],['diary','Journal'],['insights','Insights'],['profile','You'],['home','Today']]) {
     await visibleNav(page, id).click();
     await expect(page.locator('#pageTitle')).toHaveText(title);
     await expect(page.locator(`#page-${id}`)).toBeVisible();
@@ -116,7 +116,7 @@ async function exerciseAlpha(page) {
   await expect(page.locator('#modalBackdrop')).toBeHidden();
   await expect(page.locator('#page-home')).toContainText('Automated QA task');
 
-  // Diary must accept and save demo content.
+  // Journal must accept and save demo content.
   await visibleNav(page, 'diary').click();
   await page.locator('#diaryTitle').fill('Automated QA diary');
   await page.locator('#diaryEditor').fill('Browser-driven QA content.');
@@ -126,7 +126,7 @@ async function exerciseAlpha(page) {
   expect(client.errors, `Unexpected client errors: ${client.errors.join('\n')}`).toEqual([]);
 }
 
-test.describe('Cosmic Planner Alpha 1 staging', () => {
+test.describe('Cosmic Planner staging core', () => {
   test('desktop core flows work', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await exerciseAlpha(page);
