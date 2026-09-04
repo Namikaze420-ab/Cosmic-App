@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111318" />
-  <meta name="description" content="Cosmic Planner Alpha 3.0 staging release-hardening experience" />
+  <meta name="description" content="Cosmic Planner Alpha 3.1 — a private planner, journal and personalized reflection experience." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Cosmic Planner" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="manifest" href="manifest.json?v=alpha3-0" />
+  <link rel="manifest" href="manifest.json?v=alpha3-1" />
   <link rel="stylesheet" href="styles.css?v=alpha3-0" />
   <link rel="stylesheet" href="alpha-fix.css?v=alpha3-0" />
   <link rel="stylesheet" href="alpha27-quality.css?v=alpha3-0" />
@@ -16,7 +16,8 @@
   <link rel="stylesheet" href="planner-alpha28.css?v=alpha3-0" />
   <link rel="stylesheet" href="planner-alpha29.css?v=alpha3-0" />
   <link rel="stylesheet" href="planner-alpha29-fix.css?v=alpha3-0" />
-  <title>Cosmic Planner — Alpha 3.0 Preview</title>
+  <link rel="stylesheet" href="experience-alpha31.css?v=alpha3-1" />
+  <title>Cosmic Planner — Alpha 3.1 Preview</title>
 </head>
 <body>
   <div class="app-shell">
@@ -28,13 +29,13 @@
         <div class="mini-score"><strong>--</strong><span>/100</span></div>
         <p>Complete your birth profile to activate scoring.</p>
       </div>
-      <button class="profile-chip" data-page="profile"><span class="avatar">CP</span><span><strong>Cosmic User</strong><small>Alpha 3.0 staging</small></span><span>›</span></button>
+      <button class="profile-chip" data-page="profile"><span class="avatar">CP</span><span><strong>Cosmic User</strong><small>Alpha 3.1 staging</small></span><span>›</span></button>
     </aside>
 
     <main class="main" id="mainContent" tabindex="-1">
       <header class="topbar">
-        <div><span class="eyebrow" id="pageEyebrow">ALPHA 3.0</span><h1 id="pageTitle">Today</h1></div>
-        <div class="top-actions"><button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button><button class="primary-btn" id="quickAdd">＋ Add plan</button></div>
+        <div><span class="eyebrow" id="pageEyebrow">ALPHA 3.1</span><h1 id="pageTitle">Today</h1></div>
+        <div class="top-actions"><button class="icon-btn" id="searchBtn" aria-label="Quick actions">⌕</button><button class="primary-btn" id="quickAdd">＋ Add plan</button></div>
       </header>
 
       <section id="page-home" class="page active"></section>
@@ -49,7 +50,7 @@
 
   <div class="modal-backdrop" id="modalBackdrop" hidden>
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-head"><div><span class="eyebrow">Planner · Alpha 3.0</span><h2 id="modalTitle">Add to your planner</h2></div><button class="icon-btn" id="closeModal" aria-label="Close">×</button></div>
+      <div class="modal-head"><div><span class="eyebrow">Planner · Alpha 3.1</span><h2 id="modalTitle">Add to your planner</h2></div><button class="icon-btn" id="closeModal" aria-label="Close">×</button></div>
       <form id="taskForm" class="form-grid">
         <label class="field full"><span>Title</span><input id="taskTitle" required maxlength="180" placeholder="What do you want to plan?" /></label>
         <label class="field"><span>Date</span><input id="taskDate" type="date" required /></label>
@@ -85,5 +86,6 @@
   <script src="privacy-alpha2.js?v=alpha3-0"></script>
   <script src="push-alpha2.js?v=alpha3-0"></script>
   <script src="diagnostics-alpha27.js?v=alpha3-0"></script>
+  <script src="experience-alpha31.js?v=alpha3-1"></script>
 </body>
 </html>
