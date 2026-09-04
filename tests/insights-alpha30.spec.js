@@ -10,7 +10,8 @@ test.describe('Alpha 3.0 interpretation-first Insights', () => {
     await page.locator('#demoMode').click();
     await visibleNav(page, 'insights').click();
 
-    await expect(page.locator('#pageEyebrow')).toHaveText('WHAT YOUR RESULTS MEAN');
+    // Alpha 3.1 keeps the interpretation-first foundation while leading with personal guidance.
+    await expect(page.locator('#pageEyebrow')).toHaveText('PERSONAL GUIDANCE');
     await expect(page.locator('#page-insights')).toContainText('What it represents:');
     await expect(page.locator('#page-insights')).toContainText('Personal Year');
     await expect(page.locator('#page-insights')).toContainText('Personal Month');
