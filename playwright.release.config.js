@@ -2,7 +2,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  testMatch: /release-alpha30\.spec\.js/,
+  testMatch: /release-alpha3[01]\.spec\.js/,
   timeout: 45000,
   expect: { timeout: 15000 },
   retries: 0,
