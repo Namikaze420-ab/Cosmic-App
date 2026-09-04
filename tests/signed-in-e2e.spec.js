@@ -90,7 +90,7 @@ async function createDiary(page, title, content) {
 
 async function assertAstrology(page) {
   await page.locator('[data-page="insights"]:visible').first().click();
-  const card = page.locator('#page-insights .insight-module').filter({ hasText: 'Astrology · Alpha 2.6' });
+  const card = page.locator('#page-insights .insight-module').filter({ hasText: 'Astrology · Meaning' });
   await expect(card).toBeVisible();
   await expect.poll(async () => page.evaluate(() => state.astrology?.status), { timeout: 20000 }).toBe('ready');
   const result = await page.evaluate(() => state.astrology?.data);
@@ -102,8 +102,11 @@ async function assertAstrology(page) {
   expect(result.ascendant.degree_in_sign).toBeCloseTo(ASTRO_FIXTURE.expectedAscendantDegree, 2);
   expect(result.planets.Sun.equal_house).toBeGreaterThanOrEqual(1);
   expect(result.planets.Sun.equal_house).toBeLessThanOrEqual(12);
-  await expect(card).toContainText('Equal House');
-  await expect(card).toContainText('This is not Placidus');
+  await expect(card).toContainText('Your natal themes');
+  await expect(card).toContainText(`Ascendant in ${ASTRO_FIXTURE.expectedAscendantSign}`);
+  await expect(card).toContainText('What the 12 house numbers represent');
+  await expect(card).not.toContainText('Astronomy Engine');
+  await expect(card).not.toContainText('This is not Placidus');
 }
 
 async function palmConsentRoundTrip(page) {
