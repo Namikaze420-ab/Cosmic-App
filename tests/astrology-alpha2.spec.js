@@ -33,9 +33,11 @@ test.describe('Cosmic Planner Alpha 2 astrology foundation', () => {
     await expect(page.locator('#authGate')).toBeHidden();
 
     await page.locator('#desktopNav [data-page="insights"]').click();
-    const astrology = page.locator('#page-insights .insight-module').filter({ hasText: 'Astrology · Alpha 2' });
+    const astrology = page.locator('#page-insights .insight-module').filter({ hasText: 'Astrology · Meaning' });
     await expect(astrology).toBeVisible();
     await expect(astrology).toContainText('Sign in required');
-    await expect(astrology).toContainText('does not fabricate astrology results');
+    await expect(astrology).toContainText('Demo mode does not invent placements');
+    await expect.poll(async () => page.evaluate(() => state.astrology?.status)).toBe('auth_required');
+    await expect(astrology).not.toContainText('Astronomy Engine');
   });
 });
