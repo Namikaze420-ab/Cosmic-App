@@ -1,0 +1,163 @@
+name: Staging Browser QA
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cosmic-staging-browser-qa
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  browser-qa:
+    name: Chromium deep QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify push dispatcher fails closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/push-dispatch-response.json -w '%{http_code}' -X POST \
+            'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/push-reminder-dispatch' \
+            -H 'Content-Type: application/json' \
+            --data '{}')"
+          case "$code" in
+            401|423|503) ;;
+            *)
+              echo "Expected fail-closed dispatcher status, got HTTP $code"
+              cat /tmp/push-dispatch-response.json || true
+              exit 1
+              ;;
+          esac
+
+      - name: Create disposable signed-in E2E accounts
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          token() {
+            curl -fsSL \
+              -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value'
+          }
+          broker() {
+            local oidc="$1"
+            local body="$2"
+            curl -fsSL -X POST \
+              'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
+              -H "Authorization: Bearer ${oidc}" \
+              -H 'Content-Type: application/json' \
+              --data "$body"
+          }
+
+          OIDC="$(token)"
+          broker "$OIDC" '{"action":"sweep_orphans"}' >/dev/null
+
+          A="$(broker "$OIDC" '{"action":"create"}')"
+          B="$(broker "$OIDC" '{"action":"create"}')"
+
+          A_ID="$(jq -r '.user_id' <<<"$A")"
+          A_EMAIL="$(jq -r '.email' <<<"$A")"
+          A_PASSWORD="$(jq -r '.password' <<<"$A")"
+          B_ID="$(jq -r '.user_id' <<<"$B")"
+          B_EMAIL="$(jq -r '.email' <<<"$B")"
+          B_PASSWORD="$(jq -r '.password' <<<"$B")"
+
+          for value in "$A_ID" "$A_EMAIL" "$A_PASSWORD" "$B_ID" "$B_EMAIL" "$B_PASSWORD"; do
+            echo "::add-mask::$value"
+          done
+
+          {
+            echo "COSMIC_E2E_A_ID=$A_ID"
+            echo "COSMIC_E2E_A_EMAIL=$A_EMAIL"
+            echo "COSMIC_E2E_A_PASSWORD=$A_PASSWORD"
+            echo "COSMIC_E2E_B_ID=$B_ID"
+            echo "COSMIC_E2E_B_EMAIL=$B_EMAIL"
+            echo "COSMIC_E2E_B_PASSWORD=$B_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Chromium deep QA
+        run: npm run test:qa
+
+      - name: Delete disposable E2E accounts
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OIDC="$(curl -fsSL -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cosmic-staging-e2e" | jq -r '.value')"
+          broker() {
+            curl -fsSL -X POST \
+              'https://azziyvcgnxxnzpvlaijd.supabase.co/functions/v1/e2e-test-account' \
+              -H "Authorization: Bearer ${OIDC}" \
+              -H 'Content-Type: application/json' \
+              --data "$1"
+          }
+          for USER_ID in "${COSMIC_E2E_A_ID:-}" "${COSMIC_E2E_B_ID:-}"; do
+            [ -z "$USER_ID" ] && continue
+            BODY="$(jq -nc --arg id "$USER_ID" '{action:"delete",user_id:$id}')"
+            broker "$BODY" >/dev/null
+          done
+          broker '{"action":"sweep_orphans"}' >/dev/null
+
+      - name: Upload Chromium failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-chromium-failure-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+  release-matrix:
+    name: Firefox and WebKit release QA
+    needs: browser-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Run Firefox and WebKit release matrix
+        run: npm run test:release
+
+      - name: Upload release-matrix failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-release-failure-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
