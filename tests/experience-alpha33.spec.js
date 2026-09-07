@@ -12,20 +12,25 @@ async function openProfile(page) {
   await expect(page.locator('#alpha33GuidanceSettings')).toBeVisible();
 }
 
+async function expectFocus(page, expected) {
+  await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().focus_areas)).toEqual(expected);
+}
+
 test.describe('Cosmic Planner Alpha 3.3 explicit guidance personalization', () => {
   test('users can choose up to three explicit priorities and a guidance style locally in demo', async ({ page }) => {
     await enterDemo(page);
     await openProfile(page);
 
     await page.locator('[data-alpha33-focus="work"]').click();
+    await expectFocus(page, ['work']);
     await page.locator('[data-alpha33-focus="money"]').click();
+    await expectFocus(page, ['work','money']);
     await page.locator('[data-alpha33-focus="wellbeing"]').click();
-
-    await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().focus_areas)).toEqual(['work','money','wellbeing']);
+    await expectFocus(page, ['work','money','wellbeing']);
     await expect(page.locator('#alpha33GuidanceSettings')).toContainText('3/3 selected');
 
     await page.locator('[data-alpha33-focus="relationships"]').click();
-    await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().focus_areas)).toEqual(['work','money','wellbeing']);
+    await expectFocus(page, ['work','money','wellbeing']);
 
     await page.locator('[data-alpha33-style="practical"]').click();
     await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().guidance_style)).toBe('practical');
