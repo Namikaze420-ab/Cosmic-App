@@ -132,7 +132,7 @@
         <div>
           <span class="eyebrow">FIRST 5 MINUTES · ${done}/3</span>
           <h2 id="alpha32ActivationTitle">Make Cosmic useful today, not someday.</h2>
-          <p>Start with one read, one plan and one reflection. You can explore everything else later.</p>
+          <p>Start with one read, one saved plan and one reflection. You can explore everything else later.</p>
         </div>
         <button type="button" class="alpha32-dismiss" data-alpha32-dismiss aria-label="Dismiss first-session guide">×</button>
       </div>
@@ -140,8 +140,8 @@
       <div class="alpha32-steps">
         ${[
           ['guidance','✦','Read your daily guidance','See what Personal Day '+i.personalDay+' suggests for pace and focus.'],
-          ['plan','＋','Plan one anchor','Give one important outcome a real place in your day.'],
-          ['journal','✎','Choose a reflection prompt','Use the Journal only when reflection would genuinely help.']
+          ['plan','＋','Plan one anchor','Save one important outcome into a real place in your day.'],
+          ['journal','✎','Use a reflection prompt','Choose a guided prompt only if reflection would genuinely help.']
         ].map(([step, icon, title, copy]) => `
           <button type="button" class="alpha32-step ${progress.steps[step] ? 'done' : ''}" data-alpha32-activation="${step}">
             <span class="alpha32-step-icon" aria-hidden="true">${progress.steps[step] ? '✓' : icon}</span>
@@ -205,13 +205,16 @@
     page.querySelectorAll('[data-alpha32-activation]').forEach(button => {
       button.addEventListener('click', () => {
         const step = button.dataset.alpha32Activation;
-        markActivationStep(step);
-        if (step === 'guidance') setPage('insights');
-        if (step === 'journal') setPage('diary');
-        if (step === 'plan') {
-          renderHome();
-          openModal();
+        if (step === 'guidance') {
+          markActivationStep('guidance');
+          setPage('insights');
+          return;
         }
+        if (step === 'journal') {
+          setPage('diary');
+          return;
+        }
+        if (step === 'plan') openModal();
       });
     });
     page.querySelectorAll('[data-alpha32-rhythm]').forEach(button => {
@@ -263,6 +266,30 @@
     section.querySelector('#alpha32ResetGuide')?.addEventListener('click', resetActivation);
   }
 
+  function bindMeaningfulCompletionSignals() {
+    const form = document.querySelector('#taskForm');
+    if (form && typeof form.onsubmit === 'function' && !form.dataset.alpha32ActivationBound) {
+      const savePlan = form.onsubmit;
+      form.dataset.alpha32ActivationBound = 'true';
+      form.onsubmit = async function alpha32TrackedPlannerSubmit(event) {
+        const editing = Boolean(state.editingTaskId);
+        const before = (state.tasks || []).length;
+        const result = await savePlan.call(this, event);
+        if (!editing && (state.tasks || []).length > before) {
+          markActivationStep('plan');
+          if (state.page === 'home') renderHome();
+        }
+        return result;
+      };
+    }
+
+    document.addEventListener('click', event => {
+      const prompt = event.target.closest?.('[data-journal-prompt]');
+      if (!prompt) return;
+      markActivationStep('journal');
+    });
+  }
+
   renderHome = function alpha32Home() {
     originalRenderHome();
     enhanceHome();
@@ -272,6 +299,8 @@
     originalRenderProfile();
     enhanceProfile();
   };
+
+  bindMeaningfulCompletionSignals();
 
   window.CosmicExperience32 = Object.freeze({
     readActivation,
