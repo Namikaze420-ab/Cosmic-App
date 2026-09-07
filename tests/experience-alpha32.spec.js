@@ -9,7 +9,7 @@ async function enterDemo(page) {
 }
 
 test.describe('Cosmic Planner Alpha 3.2 activation and daily rhythm', () => {
-  test('first-session guide turns the first visit into three useful actions without blocking the app', async ({ page }) => {
+  test('first-session guide counts meaningful actions rather than navigation taps', async ({ page }) => {
     await enterDemo(page);
 
     const guide = page.locator('#alpha32Activation');
@@ -24,11 +24,16 @@ test.describe('Cosmic Planner Alpha 3.2 activation and daily rhythm', () => {
 
     await page.locator('[data-alpha32-activation="plan"]').click();
     await expect(page.locator('#modalBackdrop')).toBeVisible();
-    await page.locator('#closeModal').click();
+    await page.locator('#taskTitle').fill('First-session anchor');
+    await page.locator('#taskSubmit').click();
+    await expect(page.locator('#modalBackdrop')).toBeHidden();
     await expect(page.locator('#alpha32Activation')).toContainText('FIRST 5 MINUTES · 2/3');
 
     await page.locator('[data-alpha32-activation="journal"]').click();
     await expect(page.locator('#page-diary')).toBeVisible();
+    expect((await page.evaluate(() => window.CosmicExperience32.readActivation())).steps.journal).toBe(false);
+    await page.locator('[data-journal-prompt="0"]').click();
+    await expect.poll(async () => (await page.evaluate(() => window.CosmicExperience32.readActivation())).steps.journal).toBe(true);
     await page.locator('[data-page="home"]:visible').first().click();
     await expect(page.locator('#alpha32Activation')).toHaveCount(0);
 
