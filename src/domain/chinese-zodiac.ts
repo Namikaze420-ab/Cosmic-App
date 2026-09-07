@@ -61,7 +61,8 @@ export function chineseRelatedYear(date: Date, timeZone?: string): number {
   const formatter = new Intl.DateTimeFormat('en-u-ca-chinese', {
     year:'numeric', month:'numeric', day:'numeric', ...(timeZone ? { timeZone } : {})
   });
-  const related = formatter.formatToParts(date).find(part => part.type === 'relatedYear')?.value;
+  const related = formatter.formatToParts(date)
+    .find(part => String(part.type) === 'relatedYear')?.value;
   const year = Number(related);
   if (!Number.isInteger(year)) throw new Error('Chinese calendar related year unavailable');
   return year;
