@@ -3,6 +3,15 @@ const { test, expect } = require('@playwright/test');
 const account = { email:process.env.COSMIC_E2E_A_EMAIL, password:process.env.COSMIC_E2E_A_PASSWORD };
 const enabled = Boolean(account.email && account.password);
 
+async function waitForSignedInSurface(page) {
+  await expect.poll(async () => page.evaluate(() => {
+    const onboard = document.querySelector('#onboardWrap');
+    const shell = document.querySelector('.app-shell');
+    const visible = element => Boolean(element && !element.hidden && getComputedStyle(element).display !== 'none' && getComputedStyle(element).visibility !== 'hidden');
+    return visible(onboard) || visible(shell);
+  }), { timeout:20000 }).toBe(true);
+}
+
 async function signIn(page) {
   await page.goto('/', { waitUntil:'domcontentloaded' });
   await expect.poll(async () => page.evaluate(() => Boolean(window.CosmicExperience33 && window.supabase)), { timeout:20000 }).toBe(true);
@@ -10,8 +19,9 @@ async function signIn(page) {
   await page.locator('#authPassword').fill(account.password);
   await page.locator('#authSubmit').click();
   await expect.poll(async () => page.evaluate(() => Boolean(state.user?.id)), { timeout:20000 }).toBe(true);
+  await waitForSignedInSurface(page);
 
-  if (await page.locator('#onboardWrap').isVisible().catch(() => false)) {
+  if (await page.locator('#onboardWrap').isVisible()) {
     await page.locator('#pName').fill('Alpha 3.3 E2E');
     await page.locator('#pDate').fill('2000-01-01');
     await page.locator('#pTime').fill('12:00');
@@ -21,6 +31,7 @@ async function signIn(page) {
     await page.locator('#pBirthLongitude').fill('0.0000');
     await page.locator('#pConsent').check();
     await page.locator('#onboardForm button[type="submit"]').click();
+    await expect(page.locator('#onboardWrap')).toBeHidden({ timeout:20000 });
   }
   await expect(page.locator('.app-shell')).toBeVisible({ timeout:20000 });
 }
@@ -61,6 +72,7 @@ test.describe.serial('Cosmic Planner Alpha 3.3 signed-in personalization', () =>
 
     await page.reload({ waitUntil:'domcontentloaded' });
     await expect.poll(async () => page.evaluate(() => Boolean(state.user?.id && window.CosmicExperience33)), { timeout:20000 }).toBe(true);
+    await waitForSignedInSurface(page);
     await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().focus_areas), { timeout:20000 }).toEqual(['work','growth']);
     await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().guidance_style), { timeout:20000 }).toBe('reflective');
 
