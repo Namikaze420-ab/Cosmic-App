@@ -3,10 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "typecheck:domain": "tsc -p tsconfig.domain.json --noEmit",
+    "test:domain": "tsc -p tsconfig.domain.json && node --test tests/domain-alpha34.test.cjs",
     "test:qa": "playwright test",
     "test:release": "playwright test -c playwright.release.config.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0"
+    "@playwright/test": "^1.55.0",
+    "typescript": "5.9.2"
   }
 }
