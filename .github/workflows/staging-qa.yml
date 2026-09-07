@@ -30,6 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Verify typed domain parity
+        run: |
+          npm run typecheck:domain
+          npm run test:domain
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
