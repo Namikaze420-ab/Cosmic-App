@@ -45,7 +45,10 @@ test('zodiac, full scores and local dates preserve parity through LNY, leap days
         }
       }
       for (const civil of ['2024-02-29','2026-03-08','2026-11-01','2026-12-31','2026-02-31','0099-01-01','bad']) {
-        assert.deepEqual(adapters.plannerTime.parseDate(civil),legacy.parseDate(civil),zone);
+        // Compare time values: Node 22 treats two invalid Date objects as
+        // unequal and its TAP reporter cannot serialize them on failure.
+        // Object.is-based strict equality still verifies matching NaN results.
+        assert.equal(adapters.plannerTime.parseDate(civil).getTime(),legacy.parseDate(civil).getTime(),zone);
       }
     }
   } finally { if (previous === undefined) delete process.env.TZ; else process.env.TZ=previous; }
