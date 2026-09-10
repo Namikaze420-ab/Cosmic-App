@@ -5,6 +5,9 @@ node_modules/
 .next/
 dist/
 .domain-build/
+.runtime-build/
+test-results/
+playwright-report/
 coverage/
 .DS_Store
 *.log

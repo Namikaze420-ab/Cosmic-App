@@ -13,10 +13,12 @@
   state.modalEndDirty = false;
 
   function clockMinutes(value) {
-    if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
-    const [hours, minutes] = value.split(':').map(Number);
-    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
-    return hours * 60 + minutes;
+    return domainCall('plannerTime','clockMinutes',()=>{
+      if (!value || !/^\d{2}:\d{2}$/.test(value)) return null;
+      const [hours, minutes] = value.split(':').map(Number);
+      if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+      return hours * 60 + minutes;
+    },[value]);
   }
 
   function clockValue(total) {
@@ -25,12 +27,14 @@
   }
 
   function durationFromControls() {
-    const start = clockMinutes($('#taskTime')?.value);
-    const end = clockMinutes($('#taskEndTime')?.value);
-    if (start === null || end === null) return null;
-    let minutes = end - start;
-    if (minutes <= 0) minutes += 1440;
-    return minutes;
+    return domainCall('plannerTime','overnightDuration',()=>{
+      const start = clockMinutes($('#taskTime')?.value);
+      const end = clockMinutes($('#taskEndTime')?.value);
+      if (start === null || end === null) return null;
+      let minutes = end - start;
+      if (minutes <= 0) minutes += 1440;
+      return minutes;
+    },[$('#taskTime')?.value,$('#taskEndTime')?.value]);
   }
 
   function paintDuration() {

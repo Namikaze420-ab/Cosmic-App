@@ -1,4 +1,19 @@
-# Cosmic Planner Status — Alpha 2.9 Staging
+# Cosmic Planner Status — Alpha 3.5 Staging
+
+## Latest implementation
+
+Alpha 3.5 wires the Alpha 3.4 typed domains into the existing browser using
+per-domain legacy/shadow/typed switches, compatibility adapters and exception
+fallback. See [ALPHA35.md](ALPHA35.md) for the scope, parity tests and rollback.
+
+Local strict typechecks, original domain fixtures and expanded runtime parity:
+16/16 tests passed. The draft PR and its commit-specific Actions run record the
+browser, cross-engine and disposable signed-in acceptance results.
+
+The production lock remains: no `main` merge, production deployment, live Stripe
+or PostHog enablement without explicit owner approval.
+
+The sections below retain the earlier connected-core/Alpha 2.9 history.
 
 ## Current quality gate
 - Branch: `staging`

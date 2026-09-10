@@ -28,12 +28,10 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Verify typed domain parity
-        run: |
-          npm run typecheck:domain
-          npm run test:domain
+        run: npm run test:parity
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
@@ -149,7 +147,10 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Verify runtime bundle
+        run: npm run check:runtime
 
       - name: Install Firefox and WebKit
         run: npx playwright install --with-deps firefox webkit

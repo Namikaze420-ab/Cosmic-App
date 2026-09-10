@@ -79,6 +79,10 @@ export function zodiacHarmony(
 ): ZodiacHarmony {
   const natal = chineseZodiac(natalDate, timeZone);
   const current = chineseZodiac(currentDate, timeZone);
+  return harmonyForZodiacs(natal, current);
+}
+
+export function harmonyForZodiacs(natal: ChineseZodiac, current: ChineseZodiac): ZodiacHarmony {
   let score = 68;
 
   if (TRINES.some(group => group.includes(natal.animal) && group.includes(current.animal))) score = 86;

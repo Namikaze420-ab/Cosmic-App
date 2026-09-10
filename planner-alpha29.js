@@ -17,9 +17,11 @@
   }
 
   function addDays(date, days) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
+    return domainCall('plannerTime','addDays',()=>{
+      const d = new Date(date);
+      d.setDate(d.getDate() + days);
+      return d;
+    },[date,days]);
   }
 
   function mondayOf(date) {

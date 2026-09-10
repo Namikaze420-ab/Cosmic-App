@@ -17,9 +17,11 @@
   }
 
   function addDays(date, days) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
+    return domainCall('plannerTime','addDays',()=>{
+      const d = new Date(date);
+      d.setDate(d.getDate() + days);
+      return d;
+    },[date,days]);
   }
 
   function mondayOf(date) {
@@ -35,10 +37,12 @@
   }
 
   function durationMinutes(task) {
-    const start = new Date(task.starts_at).getTime();
-    const end = new Date(task.ends_at).getTime();
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 60;
-    return Math.max(1, Math.round((end - start) / 60000));
+    return domainCall('plannerTime','durationMinutes',()=>{
+      const start = new Date(task.starts_at).getTime();
+      const end = new Date(task.ends_at).getTime();
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 60;
+      return Math.max(1, Math.round((end - start) / 60000));
+    },[task]);
   }
 
   function tasksForDate(date) {

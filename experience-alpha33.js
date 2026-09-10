@@ -20,12 +20,16 @@
   const DEMO_KEY = 'cosmic.guidance.preferences.alpha33';
 
   function cleanFocus(value) {
-    const items = Array.isArray(value) ? value : [];
-    return [...new Set(items.map(String).filter(id => FOCUS_IDS.has(id)))].slice(0, 3);
+    return domainCall('guidance','cleanFocus',()=>{
+      const items = Array.isArray(value) ? value : [];
+      return [...new Set(items.map(String).filter(id => FOCUS_IDS.has(id)))].slice(0, 3);
+    },[value]);
   }
 
   function cleanStyle(value) {
-    return STYLE_IDS.has(value) ? value : 'balanced';
+    return domainCall('guidance','cleanStyle',()=>{
+      return STYLE_IDS.has(value) ? value : 'balanced';
+    },[value]);
   }
 
   function demoPreferences() {

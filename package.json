@@ -6,10 +6,16 @@
     "typecheck:domain": "tsc -p tsconfig.domain.json --noEmit",
     "test:domain": "tsc -p tsconfig.domain.json && node --test tests/domain-alpha34.test.cjs",
     "test:qa": "playwright test",
-    "test:release": "playwright test -c playwright.release.config.js"
+    "test:release": "playwright test -c playwright.release.config.js",
+    "typecheck:runtime": "tsc -p tsconfig.runtime.json --noEmit",
+    "build:runtime": "node scripts/build-runtime.cjs",
+    "check:runtime": "node scripts/build-runtime.cjs --check",
+    "test:runtime": "tsc -p tsconfig.runtime.json && node --test tests/runtime-alpha35.test.cjs",
+    "test:parity": "npm run typecheck:domain && npm run test:domain && npm run typecheck:runtime && npm run check:runtime && npm run test:runtime"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "esbuild": "0.25.9",
     "typescript": "5.9.2"
   }
 }
