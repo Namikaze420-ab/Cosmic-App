@@ -1,0 +1,16 @@
+/* Alpha 1.3 interaction fix: explicit visibility semantics. */
+[hidden] {
+  display: none !important;
+}
+
+.auth-gate[hidden],
+.onboard-wrap[hidden],
+.app-shell[hidden],
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+button,
+[role="button"] {
+  touch-action: manipulation;
+}

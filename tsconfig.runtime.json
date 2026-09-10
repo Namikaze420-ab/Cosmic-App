@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.domain.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": ".runtime-build"
+  },
+  "include": ["src/**/*.ts"]
+}
