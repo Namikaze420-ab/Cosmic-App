@@ -4,40 +4,14 @@
 
   const renderHomeBase = renderHome;
   const renderCalendarBase = renderCalendar;
-  const DAY_MS = 86400000;
+  const { startOfDay, addDays, mondayOf, timeInputValue } = alpha28;
   const MAX_SERIES_OCCURRENCES = 180;
   state.plannerView = state.plannerView || 'today';
   state.homeWeekCursor = state.homeWeekCursor || new Date();
   state.editSeriesScope = 'single';
 
-  function startOfDay(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  function addDays(date, days) {
-    return domainCall('plannerTime','addDays',()=>{
-      const d = new Date(date);
-      d.setDate(d.getDate() + days);
-      return d;
-    },[date,days]);
-  }
-
-  function mondayOf(date) {
-    const d = startOfDay(date);
-    const offset = (d.getDay() + 6) % 7;
-    d.setDate(d.getDate() - offset);
-    return d;
-  }
-
   function dateInputValue(value) {
     return isoDate(new Date(value));
-  }
-
-  function timeInputValue(value) {
-    const d = new Date(value);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 
   function nextMonthClamped(date) {

@@ -1,39 +1,31 @@
-const CACHE='cosmic-planner-alpha3-v6';
-const CORE=['./','./index.html','./icon.svg','./styles.css?v=alpha3-0','./alpha-fix.css?v=alpha3-0','./alpha27-quality.css?v=alpha3-0','./insights-alpha30.css?v=alpha3-0','./planner-alpha28.css?v=alpha3-0','./planner-alpha29.css?v=alpha3-0','./planner-alpha29-fix.css?v=alpha3-0','./experience-alpha31.css?v=alpha3-1','./experience-alpha31-planner.css?v=alpha3-1','./experience-alpha31-fix.css?v=alpha3-1','./experience-alpha32.css?v=alpha3-2','./experience-alpha33.css?v=alpha3-3','./runtime-alpha35.js?v=alpha3-5','./app.js?v=alpha3-5','./rpc-fix.js?v=alpha3-0','./auth-fix.js?v=alpha3-0','./password-policy.js?v=alpha3-0','./astrology-alpha2.js?v=alpha3-0','./insights-alpha30.js?v=alpha3-0','./notifications-alpha2.js?v=alpha3-0','./calendar-alpha2.js?v=alpha3-0','./planner-alpha28.js?v=alpha3-5','./planner-alpha28-compat.js?v=alpha3-0','./planner-alpha29.js?v=alpha3-5','./planner-alpha29-fix.js?v=alpha3-5','./palm-alpha2.js?v=alpha3-0','./palm-ai-alpha27.js?v=alpha3-0','./privacy-alpha2.js?v=alpha3-0','./push-alpha2.js?v=alpha3-0','./diagnostics-alpha27.js?v=alpha3-0','./experience-alpha31.js?v=alpha3-1','./experience-alpha31-fix.js?v=alpha3-1','./experience-alpha32.js?v=alpha3-2','./experience-alpha33.js?v=alpha3-5','./manifest.json?v=alpha3-3'];
-
-self.addEventListener('install',event=>{
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)));
+// CACHE and CORE are supplied by scripts/offline-site.cjs for this export.
+const assets = new Set(CORE);
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(CORE.map(url => new Request(url, { cache: 'reload' })));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
-      .then(()=>self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith('cosmic-planner-') && key !== CACHE).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET') return;
-  const req=event.request;
-  const url=new URL(req.url);
-  const sameOrigin=url.origin===self.location.origin;
-
-  if(req.mode==='navigate' || (sameOrigin && ['document','script','style','manifest'].includes(req.destination))){
-    event.respondWith(
-      fetch(req)
-        .then(response=>{
-          const copy=response.clone();
-          caches.open(CACHE).then(cache=>cache.put(req,copy));
-          return response;
-        })
-        .catch(()=>caches.match(req).then(hit=>hit||caches.match('./index.html')))
-    );
-    return;
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  const page = { '/': '/index.html', '/index.html': '/index.html', '/privacy/': '/privacy/index.html' }[url.pathname];
+  if (request.mode === 'navigate' && page) {
+    event.respondWith(fetch(request).catch(async () => (await caches.open(CACHE)).match(page)));
+  } else if (assets.has(url.pathname + url.search)) {
+    event.respondWith((async () => (await (await caches.open(CACHE)).match(request)) || fetch(request))());
   }
-
-  event.respondWith(caches.match(req).then(hit=>hit||fetch(req)));
 });
 
 self.addEventListener('push', event => {

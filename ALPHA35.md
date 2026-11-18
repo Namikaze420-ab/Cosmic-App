@@ -1,5 +1,7 @@
 # Alpha 3.5 — controlled runtime cutover
 
+This document describes the historical Alpha 3.5 cutover. In the current Next.js shell, set per-domain attributes in `app/planner-runtime.tsx`, rebuild, and rerun staging QA. Content hashes and the offline manifest update during the build.
+
 Baseline: Alpha 3.4, `f34ab7d0a023c07299220fab315eb3fcdbb14004`.
 
 The browser now calls the five typed domains through `src/runtime/compat.ts`.

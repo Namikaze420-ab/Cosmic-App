@@ -1,5 +1,4 @@
 (() => {
-  const DAY_MS = 86400000;
   state.editingTaskId = null;
   state.plannerLoadedStart = null;
   state.plannerLoadedEnd = null;
@@ -325,6 +324,7 @@
   $('#modalBackdrop').onclick = event => { if (event.target === $('#modalBackdrop')) closeModal(); };
 
   window.CosmicPlanner28 = Object.freeze({
+    startOfDay, addDays, mondayOf, timeInputValue,
     tasksForDate,
     ensurePlannerMonth,
     durationMinutes,

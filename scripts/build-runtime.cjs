@@ -7,6 +7,7 @@ const output = path.join(root, 'runtime-alpha35.js');
 const result = buildSync({
   absWorkingDir:root,
   entryPoints:['src/runtime/browser.ts'],
+  tsconfigRaw:{}, // Keep this classic-script bundle independent of the Next shell.
   bundle:true,
   platform:'browser',
   format:'iife',

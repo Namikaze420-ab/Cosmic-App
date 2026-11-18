@@ -1,41 +1,34 @@
-# Cosmic App
+# Cosmic Planner
 
-Professional staging-first build of Cosmic Planner: a daily planner and digital diary with transparent numerology, astrology, Chinese zodiac and optional palmistry insights.
+Cosmic Planner brings daily plans, a private journal, and optional symbolic guidance into one installable web app. Open the demo to try it on this device or sign in to save data to an account.
 
-## Branch policy
+## Run the app
 
-- `main` — approved baseline only.
-- `staging` — review and QA builds.
-- Production deployment must not be promoted before explicit quality approval.
+Use Node.js 22 and run:
 
-## Current staging build
+```sh
+npm ci
+npm run dev
+```
 
-The current review build is a dependency-free responsive PWA. It intentionally uses local demo data while production integrations are completed and tested.
+Open the local URL printed by Next.js. For the same static release that staging serves:
 
-Included in staging:
-- Today dashboard and timeline
-- Quick-add planner interaction
-- Monthly calendar with alignment indicators
-- Diary with local autosave and mood tracking
-- Transparent insight breakdowns
-- Privacy/settings screens
-- Responsive desktop/mobile navigation
-- PWA manifest + offline service worker
+```sh
+npm run build
+python3 -m http.server 4173 --bind 127.0.0.1 --directory out
+```
 
-## Production architecture prepared
+## Validate staging
 
-- Next.js App Router + TypeScript
-- Supabase SSR/Auth + Postgres + Row Level Security + private Storage
-- Vercel preview -> review gate -> production promotion
-- Stripe sandbox before any live billing
-- PostHog only after telemetry/privacy review
+```sh
+npm run test:parity
+npx playwright install --with-deps chromium firefox webkit
+npm run test:qa
+npm run test:release
+```
 
-## Deployment rule
+Browser commands build and serve the exported site. Signed-in acceptance runs in GitHub Actions using the repository's disposable test accounts. The runtime tests use the frozen Alpha 3.4 reference for comparison.
 
-Production remains locked until the staging build passes UX, security, accessibility, persistence, calculation-engine and integration QA.
+## Release
 
-## Integration status
-
-Vercel Git integration is connected to this repository. Staging commits are used to trigger preview deployments for review; production remains gated behind explicit approval.
-
-Environment routing verified on 28 August 2026: `main` tracks Production and `staging` is routed through Preview.
+The staging pull request provides a review preview. Owner approval is required to merge to main, release to production, activate live Stripe, or enable PostHog. See [STATUS.md](STATUS.md) for outstanding acceptance work and integration configuration.

@@ -1,6 +1,17 @@
-# Cosmic Planner Status — Alpha 3.5 Staging
+# Cosmic Planner — staging review
 
-## Latest implementation
+## Staging release candidate
+
+- Next.js and TypeScript own the exported app shell, sign-in screen, task dialog and public privacy page.
+- Planner and recurrence share local date helpers. The existing typed/legacy runtime modes and frozen parity oracle are retained.
+- The selected day in Plan can be exported as an iCalendar file, including per-plan reminders. This works in demo and signed-in sessions without a calendar-provider connection.
+- The public shell and pinned sign-in SDK are packaged locally. A build manifest versions the offline cache. Signed-in records remain outside that cache.
+
+Build with `npm run build` and serve `out/`. The existing Chromium and Firefox/WebKit suites now run against this exported directory. The build itself checks the exported asset manifest. Consult the checks for the current staging commit for acceptance results.
+
+Google OAuth, closed-app push, billing and palm AI retain their configuration or review requirements. The user-facing privacy notice is available at `/privacy/`; final owner/legal review and physical-device acceptance are outstanding.
+
+## Alpha 3.5 baseline
 
 Alpha 3.5 wires the Alpha 3.4 typed domains into the existing browser using
 per-domain legacy/shadow/typed switches, compatibility adapters and exception

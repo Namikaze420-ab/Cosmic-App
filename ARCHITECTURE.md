@@ -1,7 +1,9 @@
 # Cosmic Planner Architecture
 
 ## Review stage
-Static responsive PWA on `staging`, using local demo data only.
+The Next.js App Router renders the planner shell, account entry, plan editor and privacy page as a static export. Demo data stays in the browser. Signed-in flows use Supabase.
+
+The planner starts its existing interaction modules after hydration. The independently loadable typed calculation bundle keeps the Alpha 3.5 runtime switches and missing-bundle fallback. Both the plan editor and recurrence code share the same local-date helpers. The build packages the pinned auth client with the app and generates an offline cache from public assets in the export.
 
 ## Connected application target
 - Frontend: Next.js App Router + TypeScript

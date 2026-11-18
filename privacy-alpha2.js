@@ -121,6 +121,12 @@
       section.querySelector('#deleteAccountBtn').onclick = showDeleteDialog;
     }
 
+    const notice = document.createElement('a');
+    notice.href = '/privacy/';
+    notice.target = '_blank';
+    notice.rel = 'noopener';
+    notice.textContent = 'Privacy and your data';
+    section.appendChild(notice);
     card.appendChild(section);
   }
 

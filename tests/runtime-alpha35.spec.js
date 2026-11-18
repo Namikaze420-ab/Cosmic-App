@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const oracle = fs.readFileSync(path.join(__dirname,'fixtures/alpha34-legacy.cjs'),'utf8');
-const html = fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const html = fs.readFileSync(path.join(__dirname,'../out/index.html'),'utf8');
 
 test.describe('Alpha 3.5 runtime cutover and rollback', () => {
   test.use({ serviceWorkers:'block', timezoneId:'Indian/Mauritius' });
@@ -143,8 +143,8 @@ test.describe('Alpha 3.5 offline runtime',()=>{
     await page.goto('/',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await expect.poll(()=>page.evaluate(async()=>{
-      const cache=await caches.open('cosmic-planner-alpha3-v6');
-      return Boolean(await cache.match('./runtime-alpha35.js?v=alpha3-5'));
+      const runtime = document.querySelector('script[src*="runtime-alpha35.js"]');
+      return Boolean(runtime && await caches.match(runtime.src));
     })).toBe(true);
     await expect.poll(()=>page.evaluate(()=>Boolean(navigator.serviceWorker.controller))).toBe(true);
     await context.setOffline(true);

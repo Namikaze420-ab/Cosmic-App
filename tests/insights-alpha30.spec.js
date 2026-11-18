@@ -30,6 +30,7 @@ test.describe('Alpha 3.0 interpretation-first Insights', () => {
 
   test('meaning helpers classify scores and numerology consistently', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => page.evaluate(() => Boolean(window.CosmicInsightMeanings))).toBe(true);
     const result = await page.evaluate(() => ({
       high: window.CosmicInsightMeanings.scoreBand(88),
       medium: window.CosmicInsightMeanings.scoreBand(67),

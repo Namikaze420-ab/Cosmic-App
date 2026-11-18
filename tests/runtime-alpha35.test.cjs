@@ -155,13 +155,3 @@ test('the generated bundle installs synchronously, defaults to legacy and isolat
     assert.equal(runtime.status().modes.plannerTime,'legacy');
   }
 });
-
-test('static deployment and offline cache include the exact versioned bundle before the app', () => {
-  const html=fs.readFileSync('index.html','utf8');
-  const sw=fs.readFileSync('sw.js','utf8');
-  assert.ok(html.indexOf('runtime-alpha35.js')<html.indexOf('src="app.js'));
-  for (const asset of [...html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css)(?:\?[^\"]*)?)"/g)].map(match=>match[1])) {
-    if (!asset.startsWith('http')) assert.ok(sw.includes(`'./${asset}'`),`${asset} missing from offline cache`);
-  }
-  assert.ok(sw.includes('cosmic-planner-alpha3-v6'));
-});
