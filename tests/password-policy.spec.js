@@ -4,6 +4,9 @@ test.describe('Cosmic Planner password policy', () => {
   test('signup rejects weak passwords before network submission', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#authGate')).toBeVisible();
+    await expect(page.locator('#passwordPolicyHint')).toBeHidden();
+    await page.locator('#authPassword').fill('oldsecret');
+    expect(await page.locator('#authPassword').evaluate(input => input.checkValidity())).toBe(true);
     await page.locator('#authToggle').click();
     await expect(page.locator('#authSubmit')).toHaveText('Create account');
     await expect(page.locator('#passwordPolicyHint')).toContainText('16+ characters');

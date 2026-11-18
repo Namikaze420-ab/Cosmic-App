@@ -86,3 +86,8 @@
   color: var(--accent);
   text-decoration: underline;
 }
+
+#authGate h1, .onboard-wrap .auth-box h1 { color: #f8f7fc; }
+.card.hero-card h2 { color: var(--hero-text); }
+#passwordPolicyHint[hidden] { display: none; }
+#passwordPolicyHint:not([hidden]) { display: block; }

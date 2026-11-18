@@ -27,6 +27,8 @@ const modules = [
   'calendar-export.js',
 ];
 const dir = 'public/assets';
+// This directory contains build output only. Drop assets left by earlier builds.
+fs.rmSync(dir, { recursive: true, force: true });
 fs.mkdirSync(dir, { recursive: true });
 
 function asset(name, bytes) {

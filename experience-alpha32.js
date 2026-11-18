@@ -131,21 +131,20 @@
       <div class="alpha32-activation-head">
         <div>
           <span class="eyebrow">FIRST 5 MINUTES · ${done}/3</span>
-          <h2 id="alpha32ActivationTitle">Make Cosmic useful today, not someday.</h2>
-          <p>Start with one read, one saved plan and one reflection. You can explore everything else later.</p>
+          <h2 id="alpha32ActivationTitle">Set up your day</h2>
         </div>
         <button type="button" class="alpha32-dismiss" data-alpha32-dismiss aria-label="Dismiss first-session guide">×</button>
       </div>
       <div class="alpha32-progress" aria-label="First-session progress"><i style="width:${(done / 3) * 100}%"></i></div>
       <div class="alpha32-steps">
         ${[
-          ['guidance','✦','Read your daily guidance','See what Personal Day '+i.personalDay+' suggests for pace and focus.'],
-          ['plan','＋','Plan one anchor','Save one important outcome into a real place in your day.'],
-          ['journal','✎','Use a reflection prompt','Choose a guided prompt only if reflection would genuinely help.']
-        ].map(([step, icon, title, copy]) => `
+          ['guidance','✦','Read today’s guidance'],
+          ['plan','＋','Schedule a plan'],
+          ['journal','✎','Write a journal entry']
+        ].map(([step, icon, title]) => `
           <button type="button" class="alpha32-step ${progress.steps[step] ? 'done' : ''}" data-alpha32-activation="${step}">
             <span class="alpha32-step-icon" aria-hidden="true">${progress.steps[step] ? '✓' : icon}</span>
-            <span><strong>${esc(title)}</strong><small>${esc(copy)}</small></span>
+            <strong>${esc(title)}</strong>
             <span class="alpha32-step-state">${progress.steps[step] ? 'Done' : 'Start'} →</span>
           </button>`).join('')}
       </div>`;

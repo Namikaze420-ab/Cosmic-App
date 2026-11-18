@@ -460,7 +460,7 @@
     const page = $('#page-home');
     const grid = page.querySelector('.home-grid');
     if (!grid) return;
-    grid.insertAdjacentHTML('beforebegin', `<div class="planner-home-toolbar"><div><span class="eyebrow">Planning mode · Alpha 2.9</span><h2>Today</h2></div>${plannerViewSwitch()}</div>`);
+    grid.insertAdjacentHTML('beforebegin', `<div class="planner-home-toolbar">${plannerViewSwitch()}</div>`);
     const card = page.querySelector('.planner-card');
     if (card) {
       const head = card.querySelector('.card-head');

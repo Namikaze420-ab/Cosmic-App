@@ -45,19 +45,22 @@
   function ensureHint() {
     const input = document.querySelector('#authPassword');
     if (!input) return;
-    input.minLength = POLICY.minLength;
+    const signup = document.querySelector('#authSubmit')?.dataset.mode === 'signup';
+    if (signup) input.minLength = POLICY.minLength;
+    else input.removeAttribute('minlength');
 
     let hint = document.querySelector('#passwordPolicyHint');
     if (!hint) {
       hint = document.createElement('small');
       hint.id = 'passwordPolicyHint';
       hint.className = 'auth-note';
-      hint.style.display = 'block';
       hint.style.marginTop = '6px';
       hint.textContent = 'New passwords: 16+ characters with lowercase, uppercase, a number and a symbol.';
       input.parentElement?.appendChild(hint);
     }
-    input.setAttribute('aria-describedby', 'passwordPolicyHint');
+    hint.hidden = !signup;
+    if (signup) input.setAttribute('aria-describedby', 'passwordPolicyHint');
+    else input.removeAttribute('aria-describedby');
   }
 
   function interceptSubmit(event) {
