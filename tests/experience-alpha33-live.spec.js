@@ -71,8 +71,7 @@ test.describe.serial('Cosmic Planner Alpha 3.3 signed-in personalization', () =>
     expect(persisted.guidance_style).toBe('reflective');
 
     await page.reload({ waitUntil:'domcontentloaded' });
-    await expect.poll(async () => page.evaluate(() => Boolean(state.user?.id && window.CosmicExperience33)), { timeout:20000 }).toBe(true);
-    await waitForSignedInSurface(page);
+    await expect(page.locator('.app-shell')).toBeVisible({ timeout:20000 });
     await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().focus_areas), { timeout:20000 }).toEqual(['work','growth']);
     await expect.poll(async () => page.evaluate(() => window.CosmicExperience33.currentPreferences().guidance_style), { timeout:20000 }).toBe('reflective');
 

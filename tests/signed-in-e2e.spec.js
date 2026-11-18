@@ -215,6 +215,7 @@ test.describe.serial('Cosmic Planner Alpha 2.7 signed-in E2E', () => {
     await createDiary(pageA, diaryA, `Private synthetic test content ${runTag}`);
     await assertAstrology(pageA);
     await pageA.reload({ waitUntil: 'domcontentloaded' });
+    await expect(pageA.locator('.app-shell')).toBeVisible({ timeout:20000 });
     await expect.poll(async () => (await dbRows(pageA, 'planner_items', 'title')).some(r => r.title === titleA), { timeout: 15000 }).toBe(true);
     await contextA.close();
 
