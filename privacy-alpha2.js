@@ -57,14 +57,16 @@
           <button id="confirmDeleteAccount" class="primary-btn" type="submit" disabled>Delete permanently</button>
           <button id="cancelDeleteAccount" class="ghost-btn" type="button">Cancel</button>
         </form>
-        <div id="deleteAccountStatus" class="auth-msg"></div>
+        <div id="deleteAccountStatus" role="status" class="auth-msg"></div>
       </section>`;
     document.body.appendChild(wrap);
 
+    showPlannerDialog(wrap);
     const phrase = document.querySelector('#deleteAccountPhrase');
+    phrase.focus();
     const confirm = document.querySelector('#confirmDeleteAccount');
     phrase.addEventListener('input', () => { confirm.disabled = phrase.value !== 'DELETE'; });
-    document.querySelector('#cancelDeleteAccount').onclick = () => wrap.remove();
+    document.querySelector('#cancelDeleteAccount').onclick = () => { hidePlannerDialog(wrap); wrap.remove(); };
 
     document.querySelector('#deleteAccountForm').onsubmit = async (event) => {
       event.preventDefault();

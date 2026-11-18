@@ -35,11 +35,11 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 function injectAlphaUI(){const style=document.createElement('style');style.textContent=`.auth-gate{position:fixed;inset:0;z-index:100;background:#0d1016;display:grid;place-items:center;padding:22px}.auth-box{width:min(470px,100%);background:#151922;border:1px solid #2b3240;border-radius:24px;padding:30px;box-shadow:0 25px 70px #0008}.auth-box h1{font-size:30px;margin:8px 0}.auth-box p{color:#9ba4b3;line-height:1.55}.auth-form{display:grid;gap:12px;margin-top:22px}.auth-form label{display:grid;gap:7px;font-size:12px;color:#cbd0d8}.auth-form input,.onboard input{width:100%;padding:12px;border:1px solid #2b3240;border-radius:11px;background:#0f131a;color:#f4f3ef}.auth-actions{display:grid;gap:8px;margin-top:14px}.auth-msg{min-height:18px;color:#e0b85c;font-size:12px;margin-top:9px}.auth-note{font-size:11px;color:#7f8998!important}.onboard-wrap{position:fixed;inset:0;z-index:110;background:#05070bc9;backdrop-filter:blur(12px);display:grid;place-items:center;padding:20px}.onboard{width:min(610px,100%);max-height:92vh;overflow:auto;background:#151922;border:1px solid #2b3240;border-radius:24px;padding:28px}.onboard h2{margin:7px 0}.onboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.onboard-grid .wide{grid-column:1/-1}.consent{display:flex!important;gap:9px;align-items:flex-start}.consent input{width:auto}.cloud-state{font-size:10px;color:#73c59a}.task-controls{display:flex;gap:6px;margin-top:9px}.task-mini{border:1px solid #2b3240;background:#202632;color:#cbd0d8;border-radius:8px;padding:5px 8px;font-size:10px}.alpha-disclaimer{margin-top:15px;padding:11px 12px;border:1px solid #2b3240;border-radius:10px;background:#10141b;color:#9ba4b3;font-size:11px;line-height:1.5}.formula{font-family:ui-monospace,monospace;padding:12px;border:1px solid #2b3240;border-radius:10px;background:#10141b;margin-top:12px;color:#cbd0d8;font-size:12px}@media(max-width:600px){.onboard-grid{grid-template-columns:1fr}.onboard-grid .wide{grid-column:1}.auth-box,.onboard{padding:22px}}`;document.head.appendChild(style);
 $('#authGate').hidden=false;$('.app-shell').hidden=true;}
 
-function showOnboarding(){let w=$('#onboardWrap');if(!w){w=document.createElement('div');w.id='onboardWrap';w.className='onboard-wrap';document.body.appendChild(w)}w.hidden=false;w.innerHTML=`<section class="onboard"><span class="eyebrow">PERSONALIZE YOUR PLANNER</span><h2>Set your birth profile</h2><p class="module-copy">Birth date powers Alpha 1 Numerology and Chinese Zodiac. Birth time and place are stored for the later astrology module.</p><form id="onboardForm" class="onboard-grid"><label class="wide">Display name<input id="pName" maxlength="80" required value="${esc(state.profile?.display_name||state.user?.user_metadata?.display_name||'')}"></label><label>Birth date<input id="pDate" type="date" required value="${state.profile?.birth_date||''}"></label><label>Birth time<input id="pTime" type="time" value="${(state.profile?.birth_time||'').slice(0,5)}"></label><label class="wide">Birth place<input id="pPlace" maxlength="120" placeholder="City, country" value="${esc(state.profile?.birth_place||'')}"></label><label class="wide consent"><input id="pConsent" type="checkbox" required ${state.profile?.onboarding_completed?'checked':''}><span>I understand these reflection features are not scientific predictions.</span></label><button class="primary-btn wide" type="submit">Save profile</button></form><div id="onboardMsg" class="auth-msg"></div></section>`;$('#onboardForm').onsubmit=saveOnboarding;}
+function showOnboarding(){let w=$('#onboardWrap');if(!w){w=document.createElement('div');w.id='onboardWrap';w.className='onboard-wrap';document.body.appendChild(w)}const editing = !$('.app-shell').hidden;showPlannerDialog(w);w.innerHTML=`<section class="onboard" role="dialog" aria-modal="true" aria-labelledby="onboardTitle"><span class="eyebrow">PERSONALIZE YOUR PLANNER</span><h2 id="onboardTitle">${editing ? 'Edit your birth profile' : 'Set your birth profile'}</h2><p class="module-copy">Your birth date personalizes daily guidance. Add a birth time and location for more detail.</p><form id="onboardForm" class="onboard-grid"><label class="wide">Display name<input id="pName" maxlength="80" required value="${esc(state.profile?.display_name||state.user?.user_metadata?.display_name||'')}"></label><label>Birth date<input id="pDate" type="date" required value="${state.profile?.birth_date||''}"></label><label>Birth time<input id="pTime" type="time" value="${(state.profile?.birth_time||'').slice(0,5)}"></label><label class="wide">Birth place<input id="pPlace" maxlength="120" placeholder="City, country" value="${esc(state.profile?.birth_place||'')}"></label><label class="wide consent"><input id="pConsent" type="checkbox" required ${state.profile?.onboarding_completed?'checked':''}><span>I understand these reflection features are not scientific predictions.</span></label><button class="primary-btn wide" type="submit">Save profile</button>${editing ? '<button type="button" class="ghost-btn wide" id="cancelProfile">Cancel</button>' : ''}</form><div role="status" id="onboardMsg" class="auth-msg"></div></section>`;$('#onboardForm').onsubmit=saveOnboarding;if(editing)$('#cancelProfile').onclick=()=>hidePlannerDialog(w);$('#pName').focus();}
 
 function navHTML(){return navItems.map(([id,label,icon])=>`<button class="nav-btn ${id===state.page?'active':''}" data-page="${id}"><span class="nav-icon">${icon}</span><span>${label}</span></button>`).join('')}
 function setupNav(){$('#desktopNav').innerHTML=navHTML();$('#mobileNav').innerHTML=navHTML();document.addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)setPage(b.dataset.page)})}
-function setPage(page){state.page=page;$$('.page').forEach(x=>x.classList.toggle('active',x.id===`page-${page}`));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const labels={home:['TODAY · '+fmtDate(new Date(),{day:'numeric',month:'long'}).toUpperCase(),'Today'],calendar:['PLAN WITH CONTEXT','Calendar'],diary:['PRIVATE BY DESIGN','Diary'],insights:['TRANSPARENT REASONING','Insights'],profile:['ACCOUNT & PRIVACY','Profile']};$('#pageEyebrow').textContent=labels[page][0];$('#pageTitle').textContent=labels[page][1];renderPage(page);window.scrollTo({top:0,behavior:'smooth'})}
+function setPage(page){state.page=page;$$('.page').forEach(x=>x.classList.toggle('active',x.id===`page-${page}`));$$('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));$$('nav [data-page]').forEach(button => {if(button.dataset.page===page)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')});const labels={home:['TODAY · '+fmtDate(new Date(),{day:'numeric',month:'long'}).toUpperCase(),'Today'],calendar:['PLAN WITH CONTEXT','Calendar'],diary:['PRIVATE BY DESIGN','Diary'],insights:['TRANSPARENT REASONING','Insights'],profile:['ACCOUNT & PRIVACY','Profile']};$('#pageEyebrow').textContent=labels[page][0];$('#pageTitle').textContent=labels[page][1];renderPage(page);window.scrollTo({top:0,behavior:'smooth'})}
 function renderPage(p){({home:renderHome,calendar:renderCalendar,diary:renderDiary,insights:renderInsights,profile:renderProfile}[p]||renderHome)()}
 function syncChrome(){const i=insight(),name=state.profile?.display_name||'Cosmic User';$('.mini-score strong').textContent=i?.score??'--';$('.sidebar-card p').textContent=i?`Strong reflection window: ${i.windows[0]}.`:'Complete your birth profile to activate scoring.';$('.profile-chip strong').textContent=name;$('.profile-chip small').textContent=state.mode==='demo'?'Local demo':'Supabase secured';$('.avatar').textContent=name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'CP';}
 
@@ -48,15 +48,148 @@ function taskHTML(t){const done=t.status==='completed',score=taskScore(t);return
 
 function renderCalendar(){const c=state.calendarCursor,y=c.getFullYear(),m=c.getMonth(),first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();let cells='';for(let x=0;x<42;x++){const n=x-offset+1,d=new Date(y,m,n),inMonth=n>=1&&n<=days,i=insight(d),cls=i?.score>=82?'high':i?.score>=70?'mid':'low',selected=isoDate(d)===isoDate(state.selectedDate);cells+=`<button class="day-cell ${!inMonth?'muted':''} ${isoDate(d)===isoDate(new Date())?'today':''} ${selected?'selected':''}" data-date="${inMonth?isoDate(d):''}"><span class="day-number">${d.getDate()}</span>${inMonth&&i?`<span class="luck-dot ${cls}"></span>`:''}</button>`}const s=insight(state.selectedDate);$('#page-calendar').innerHTML=`<div class="calendar-layout"><section class="card calendar-card"><div class="calendar-toolbar"><div><span class="eyebrow">Month view</span><h2 style="margin:5px 0 0">${fmtDate(first,{month:'long',year:'numeric'})}</h2></div><div class="month-nav"><button class="icon-btn" id="prevMonth">‹</button><button class="icon-btn" id="nextMonth">›</button></div></div><div class="weekday-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div>${x}</div>`).join('')}</div><div class="month-grid">${cells}</div></section><aside class="card side-panel"><span class="eyebrow">Selected date</span><h3 style="margin:6px 0 0">${fmtDate(state.selectedDate)}</h3><div class="day-score">${s?.score??'--'}</div><span class="module-sub">Reflective alignment</span>${s?`<div class="breakdown"><div class="bar-row"><span>Numerology</span><div class="bar"><i style="width:${s.numerologyScore}%"></i></div><b>${s.numerologyScore}</b></div><div class="bar-row"><span>Chinese zodiac</span><div class="bar"><i style="width:${s.zodiacScore}%"></i></div><b>${s.zodiacScore}</b></div></div><div class="journal-prompt" style="margin-top:22px">Personal Day ${s.personalDay}. ${esc(s.tip)} Suggested windows: ${s.windows.join(' · ')}</div>`:''}</aside></div>`;$('#prevMonth').onclick=()=>{state.calendarCursor=new Date(y,m-1,1);renderCalendar()};$('#nextMonth').onclick=()=>{state.calendarCursor=new Date(y,m+1,1);renderCalendar()};$$('[data-date]').forEach(b=>b.onclick=()=>{if(b.dataset.date){state.selectedDate=parseDate(b.dataset.date);renderCalendar()}})}
 
-function renderDiary(){const d=state.diary||{title:'',content:'',mood:null};$('#page-diary').innerHTML=`<div class="diary-layout"><aside class="card entry-list"><div class="card-head"><div><span class="eyebrow">Entries</span><h3>Today</h3></div></div><button class="entry-item active"><strong>${fmtDate(new Date(),{weekday:'long'})}</strong><span>${fmtDate(new Date(),{day:'numeric',month:'short'})} · ${d.content?'Draft saved':'New entry'}</span></button><div class="alpha-disclaimer">Alpha 1 stores one encrypted-in-transit, user-scoped diary record per day. End-to-end encryption is a later roadmap item and is not claimed here.</div></aside><section class="card editor-card"><div class="card-head"><div><span class="eyebrow">${fmtDate(new Date()).toUpperCase()}</span></div><span class="save-state" id="diarySave">${state.mode==='demo'?'Local demo':'Cloud saved'}</span></div><div class="journal-prompt">Reflection prompt · What deserves more of your attention tomorrow?</div><input class="diary-title" id="diaryTitle" value="${esc(d.title||'')}" placeholder="Give today a title"/><div class="mood-row">${['😞','😕','😐','🙂','😊'].map((x,k)=>`<button class="mood ${Number(d.mood)===k+1?'selected':''}" data-mood="${k+1}">${x}</button>`).join('')}</div><textarea class="diary-editor" id="diaryEditor" placeholder="Write without pressure. This space is yours…">${esc(d.content||'')}</textarea></section></div>`;const queue=()=>{clearTimeout(state.saveTimer);$('#diarySave').textContent='Saving…';state.saveTimer=setTimeout(saveDiary,800)};$('#diaryEditor').oninput=queue;$('#diaryTitle').oninput=queue;$$('[data-mood]').forEach(b=>b.onclick=()=>{state.diary={...(state.diary||{}),mood:Number(b.dataset.mood)};$$('[data-mood]').forEach(x=>x.classList.toggle('selected',x===b));queue()})}
-async function saveDiary(){const row={title:$('#diaryTitle')?.value.trim()||'',content:$('#diaryEditor')?.value||'',mood:state.diary?.mood||null};state.diary={...(state.diary||{}),...row};if(state.mode==='demo'){localStorage.setItem('cosmic.alpha.diary',JSON.stringify(state.diary));$('#diarySave').textContent='Saved locally';return}const {error}=await sb.from('diary_entries').upsert({user_id:state.user.id,entry_date:isoDate(),...row},{onConflict:'user_id,entry_date'});$('#diarySave').textContent=error?'Save failed':'Cloud saved';if(error)toast('Diary save failed')}
+const moodLabels = ['Very low', 'Low', 'Neutral', 'Good', 'Great'];
+let diarySaveStatus = '';
+let pendingDiary = null;
+let diaryWrites = Promise.resolve();
+let diaryRevision = 0;
+
+function warnUnsavedDiary(event) {
+  event.preventDefault();
+  event.returnValue = '';
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && pendingDiary) flushDiary();
+});
+
+function setDiaryStatus(message) {
+  if (state.mode !== 'demo' && (message === 'Saving…' || message.startsWith('Save failed'))) {
+    window.addEventListener('beforeunload', warnUnsavedDiary);
+  } else {
+    window.removeEventListener('beforeunload', warnUnsavedDiary);
+  }
+  diarySaveStatus = message;
+  const status = $('#diarySave');
+  if (status) status.textContent = message;
+}
+
+function flushDiary() {
+  clearTimeout(state.saveTimer);
+  const draft = pendingDiary;
+  if (!draft) return diaryWrites;
+  pendingDiary = null;
+  diaryWrites = diaryWrites.then(async () => {
+    if (state.user?.id !== draft.row.user_id || state.mode === 'demo') return;
+    try {
+      const { error } = await sb.from('diary_entries').upsert(draft.row, { onConflict: 'user_id,entry_date' });
+      if (error) throw error;
+      if (draft.revision === diaryRevision) setDiaryStatus('Cloud saved');
+    } catch {
+      if (draft.revision === diaryRevision) {
+        pendingDiary = draft;
+        setDiaryStatus('Save failed · edit to retry');
+      }
+    }
+  });
+  return diaryWrites;
+}
+
+function queueDiary() {
+  const row = { title: $('#diaryTitle').value, content: $('#diaryEditor').value, mood: state.diary?.mood || null };
+  const entryDate = isoDate();
+  state.diary = { ...row, entry_date: entryDate };
+  if (state.mode === 'demo') {
+    try {
+      localStorage.setItem('cosmic.alpha.diary', JSON.stringify(state.diary));
+      setDiaryStatus('Saved locally');
+    } catch {
+      setDiaryStatus('Save failed · browser storage unavailable');
+    }
+    return;
+  }
+  if (pendingDiary && pendingDiary.row.entry_date !== entryDate) flushDiary();
+  clearTimeout(state.saveTimer);
+  pendingDiary = { revision: ++diaryRevision, row: { ...row, entry_date: entryDate, user_id: state.user.id } };
+  setDiaryStatus('Saving…');
+  state.saveTimer = setTimeout(flushDiary, 800);
+}
+
+function renderDiary() {
+  const d = state.diary || {};
+  const demoMode = state.mode === 'demo';
+  $('#page-diary').innerHTML = `<div class="diary-layout">
+    <aside class="card entry-list"><div class="card-head"><div><span class="eyebrow">Entries</span><h3>Today</h3></div></div>
+      <div class="entry-item active"><strong>${fmtDate(new Date(), {weekday:'long'})}</strong><span>${fmtDate(new Date(), {day:'numeric',month:'short'})}</span></div>
+      <div class="alpha-disclaimer">${demoMode ? 'This demo entry is stored in this browser. Anyone using this browser profile can open it.' : 'Your daily entry is saved to your account.'}</div>
+    </aside>
+    <section class="card editor-card"><div class="card-head"><span class="eyebrow">${fmtDate(new Date()).toUpperCase()}</span>
+      <span class="save-state" role="status" id="diarySave">${diarySaveStatus || (demoMode ? 'Local demo' : d.entry_date ? 'Cloud saved' : 'New entry')}</span></div>
+      <div class="journal-prompt">Reflection prompt · What deserves more of your attention tomorrow?</div>
+      <input class="diary-title" id="diaryTitle" aria-label="Entry title" value="${esc(d.title || '')}" placeholder="Give today a title"/>
+      <div class="mood-row" role="group" aria-label="Mood">${['😞','😕','😐','🙂','😊'].map((emoji,k) => {
+        const selected = Number(d.mood) === k + 1;
+        return `<button class="mood ${selected ? 'selected' : ''}" aria-label="${moodLabels[k]}" aria-pressed="${selected}" data-mood="${k+1}">${emoji}</button>`;
+      }).join('')}</div>
+      <textarea class="diary-editor" id="diaryEditor" aria-label="Journal entry" placeholder="Write without pressure. This space is yours…">${esc(d.content || '')}</textarea>
+    </section></div>`;
+  $('#diaryEditor').oninput = $('#diaryTitle').oninput = queueDiary;
+  $$('[data-mood]').forEach(button => button.onclick = () => {
+    state.diary = { ...state.diary, mood: Number(button.dataset.mood) };
+    $$('[data-mood]').forEach(item => {
+      item.classList.toggle('selected', item === button);
+      item.setAttribute('aria-pressed', String(item === button));
+    });
+    queueDiary();
+  });
+}
+
 
 function renderInsights(){const i=insight();if(!i){$('#page-insights').innerHTML='<div class="card"><h2>Profile required</h2></div>';return}const n=i.zodiac.natal,c=i.zodiac.current;$('#page-insights').innerHTML=`<div class="insights-grid"><section class="card insight-module"><div class="module-head"><div><span class="eyebrow">Numerology</span><h3 style="margin:6px 0 0">Life Path ${i.lifePath}</h3></div><span class="module-icon">◌</span></div><div class="module-value">${i.personalDay}</div><div class="module-sub">Personal Day</div><p class="module-copy">Personal Year ${i.personalYear} · Personal Month ${i.personalMonth}. The Personal Day drives the changing Numerology score today.</p></section><section class="card insight-module"><div class="module-head"><div><span class="eyebrow">Chinese Zodiac</span><h3 style="margin:6px 0 0">${n.element} ${n.animal}</h3></div><span class="module-icon">◇</span></div><div class="module-value">${i.zodiacScore}</div><div class="module-sub">Year harmony</div><p class="module-copy">Birth year ${n.year}; current Chinese year ${c.element} ${c.animal} (${c.year}). Lunar New Year boundaries use the browser's Chinese calendar rather than January 1.</p></section><section class="card insight-module"><div class="module-head"><div><span class="eyebrow">Cosmic Score v1</span><h3 style="margin:6px 0 0">Explainable</h3></div><span class="module-icon">✦</span></div><div class="module-value">${i.score}</div><div class="module-sub">Daily alignment</div><p class="module-copy">Same profile + same date = same score. No random number generation is used.</p></section><section class="card insight-module"><div class="module-head"><div><span class="eyebrow">Astrology</span><h3 style="margin:6px 0 0">Reserved for Alpha 2</h3></div><span class="module-icon">☾</span></div><div class="module-value">—</div><div class="module-sub">Not yet included</div><p class="module-copy">We will add an ephemeris-based calculation layer only after the core account, planner and diary flows pass QA.</p></section></div><section class="card" style="padding:23px;margin-top:18px"><span class="eyebrow">TRANSPARENT FORMULA</span><h2 style="margin:7px 0 10px">A score you can audit.</h2><div class="formula">Daily score = (Numerology × 65%) + (Chinese Zodiac × 35%)<br>Today = (${i.numerologyScore} × .65) + (${i.zodiacScore} × .35) = ${i.score}</div><div class="alpha-disclaimer">These systems are cultural/spiritual reflection frameworks, not scientifically validated predictors. Financial, medical, legal and other high-stakes decisions should not be based on this score.</div></section>`}
 
 function setting(name,desc,on){return `<div class="settings-row"><span><strong>${name}</strong><small>${desc}</small></span><button class="toggle ${on?'on':''}" aria-label="Toggle ${name}"></button></div>`}
 function renderProfile(){const p=state.profile||{},name=p.display_name||'Cosmic User';$('#page-profile').innerHTML=`<div class="profile-grid"><section class="card settings-card"><div class="card-head"><div><span class="eyebrow">Profile</span><h2>${esc(name)}</h2></div></div><div class="settings-section"><h3>Birth profile</h3><div class="status-list"><div class="status-row"><span>Birth date</span><b>${p.birth_date?fmtDate(parseDate(p.birth_date),{day:'numeric',month:'long',year:'numeric'}):'Not set'}</b></div><div class="status-row"><span>Birth time</span><b>${p.birth_time||'Not set'}</b></div><div class="status-row"><span>Birth place</span><b>${esc(p.birth_place||'Not set')}</b></div><div class="status-row"><span>Timezone</span><b>${esc(p.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone)}</b></div></div><button class="ghost-btn" id="editProfile" style="margin-top:14px">Edit birth profile</button></div><div class="settings-section"><h3>Roadmap preferences</h3>${setting('Morning briefing','Alpha 2 notification flow',true)}${setting('Calendar sync','Google Calendar in Alpha 2',false)}${setting('Palm image processing','Not enabled in Alpha 1',false)}</div></section><aside class="card profile-summary"><div class="large-avatar">${name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}</div><span class="eyebrow">${state.mode==='demo'?'Demo workspace':'Secure account'}</span><h2 style="margin:5px 0 8px">${esc(state.user?.email||'Local demo')}</h2><p>${state.mode==='demo'?'Demo data remains on this browser.':'Planner, diary and profile rows are protected by Supabase Row Level Security.'}</p><div class="status-list"><div class="status-row"><span>Database</span><b class="status-good">Connected</b></div><div class="status-row"><span>Production deploy</span><b>Locked</b></div><div class="status-row"><span>Payments</span><b>Not activated</b></div></div><button class="ghost-btn" id="logoutBtn" style="margin-top:18px;width:100%">${state.mode==='demo'?'Exit demo':'Sign out'}</button></aside></div>`;$('#editProfile').onclick=showOnboarding;$('#logoutBtn').onclick=logout;$$('.toggle').forEach(b=>b.onclick=()=>b.classList.toggle('on'))}
 
-function openModal(){$('#modalBackdrop').hidden=false;setTimeout(()=>$('#taskTitle').focus(),20)}function closeModal(){$('#modalBackdrop').hidden=true;$('#taskForm').reset();$('#taskTime').value='14:30';state.priority='Medium';$$('[data-priority]').forEach(b=>b.classList.toggle('selected',b.dataset.priority==='Medium'))}
+function selectPriority(value) {
+  state.priority = value;
+  $$('[data-priority]').forEach(button => {
+    const selected = button.dataset.priority === value;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+}
+
+let dialogOpener;
+function showPlannerDialog(backdrop) {
+  dialogOpener = document.activeElement;
+  backdrop.hidden = false;
+  $('.app-shell').inert = true;
+  $('#authGate').inert = true;
+}
+function hidePlannerDialog(backdrop) {
+  backdrop.hidden = true;
+  $('.app-shell').inert = false;
+  $('#authGate').inert = false;
+  const target = dialogOpener?.isConnected && dialogOpener !== document.body && dialogOpener.getClientRects().length ? dialogOpener : $('#quickAdd');
+  target?.focus();
+}
+document.addEventListener('keydown', event => {
+  const backdrop = document.querySelector('#modalBackdrop:not([hidden]), #commandPalette:not([hidden]), #onboardWrap:not([hidden]), #accountDeleteDialog:not([hidden]), #recoveryWrap:not([hidden])');
+  if (!backdrop) return;
+  if (event.key === 'Escape' && backdrop.id === 'modalBackdrop') {
+    event.preventDefault();
+    closeModal();
+  }
+  if (event.key === 'Escape' && backdrop.id === 'onboardWrap') $('#cancelProfile')?.click();
+  if (event.key === 'Escape' && backdrop.id === 'accountDeleteDialog') $('#cancelDeleteAccount')?.click();
+  if (event.key !== 'Tab') return;
+  const controls = [...backdrop.querySelectorAll('input, textarea, select, button, a[href]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+  if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+});
+
+function openModal(){showPlannerDialog($('#modalBackdrop'));setTimeout(()=>$('#taskTitle').focus(),20)}function closeModal(){hidePlannerDialog($('#modalBackdrop'));$('#taskForm').reset();$('#taskTime').value='14:30';selectPriority('Medium')}
 async function addTask(e){e.preventDefault();const start=new Date(`${isoDate()}T${$('#taskTime').value}:00`),end=new Date(start.getTime()+60*60000),payload={id:crypto.randomUUID(),title:$('#taskTitle').value.trim(),category:$('#taskCategory').value.toLowerCase(),priority:String(state.priority).toLowerCase(),starts_at:start.toISOString(),ends_at:end.toISOString(),status:'planned',source:'cosmic_planner',reminder_minutes:[15]};if(state.mode==='demo'){state.tasks.push(payload);localStorage.setItem('cosmic.alpha.tasks',JSON.stringify(state.tasks));closeModal();renderHome();return}const {data,error}=await sb.from('planner_items').insert({...payload,user_id:state.user.id}).select().single();if(error)return toast(error.message);state.tasks.push(data);closeModal();renderHome();toast('Plan saved to cloud')}
 async function taskAction(action,id){const t=state.tasks.find(x=>x.id===id);if(!t)return;if(action==='toggle'){const status=t.status==='completed'?'planned':'completed';if(state.mode==='demo'){t.status=status;localStorage.setItem('cosmic.alpha.tasks',JSON.stringify(state.tasks))}else{const {error}=await sb.from('planner_items').update({status}).eq('id',id);if(error)return toast('Update failed');t.status=status}}else{if(state.mode==='demo'){state.tasks=state.tasks.filter(x=>x.id!==id);localStorage.setItem('cosmic.alpha.tasks',JSON.stringify(state.tasks))}else{const {error}=await sb.from('planner_items').delete().eq('id',id);if(error)return toast('Delete failed');state.tasks=state.tasks.filter(x=>x.id!==id)}}renderHome()}
 
@@ -64,12 +197,12 @@ async function persistInsight(){if(state.mode==='demo'||!state.user)return;const
 async function loadData(){const uid=state.user.id,start=new Date();start.setHours(0,0,0,0);const end=new Date();end.setHours(23,59,59,999);const [p,pr,t,d]=await Promise.all([sb.from('profiles').select('*').eq('id',uid).maybeSingle(),sb.from('user_preferences').select('*').eq('user_id',uid).maybeSingle(),sb.from('planner_items').select('*').eq('user_id',uid).gte('starts_at',start.toISOString()).lte('starts_at',end.toISOString()).order('starts_at'),sb.from('diary_entries').select('*').eq('user_id',uid).eq('entry_date',isoDate()).maybeSingle()]);state.profile=p.data;state.preferences=pr.data;state.tasks=t.data||[];state.diary=d.data;if(!state.profile?.birth_date||!state.profile?.onboarding_completed)showOnboarding();else{await persistInsight();enterApp()}}
 function demo(){state.mode='demo';state.user={id:'demo',email:'demo@cosmic.local',user_metadata:{display_name:'Preview User'}};state.profile=JSON.parse(localStorage.getItem('cosmic.alpha.profile')||'null')||{display_name:'Preview User',birth_date:'1995-03-15',birth_time:'02:25',birth_place:'Mauritius',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,onboarding_completed:true};state.tasks=JSON.parse(localStorage.getItem('cosmic.alpha.tasks')||'null')||[{id:'d1',title:'Morning planning',starts_at:new Date(new Date().setHours(8,30,0,0)).toISOString(),ends_at:new Date(new Date().setHours(9,30,0,0)).toISOString(),status:'completed',priority:'medium',category:'personal'},{id:'d2',title:'Deep work session',starts_at:new Date(new Date().setHours(10,0,0,0)).toISOString(),ends_at:new Date(new Date().setHours(11,0,0,0)).toISOString(),status:'planned',priority:'high',category:'work'},{id:'d3',title:'Review monthly budget',starts_at:new Date(new Date().setHours(14,30,0,0)).toISOString(),ends_at:new Date(new Date().setHours(15,30,0,0)).toISOString(),status:'planned',priority:'medium',category:'finance'}];state.diary=JSON.parse(localStorage.getItem('cosmic.alpha.diary')||'null')||null;enterApp()}
 function enterApp(){$('#authGate').hidden=true;$('.app-shell').hidden=false;setupNav();syncChrome();setPage('home')}
-async function saveOnboarding(e){e.preventDefault();const row={display_name:$('#pName').value.trim(),birth_date:$('#pDate').value,birth_time:$('#pTime').value||null,birth_place:$('#pPlace').value.trim()||null,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,onboarding_completed:true};if(state.mode==='demo'){state.profile={...state.profile,...row};localStorage.setItem('cosmic.alpha.profile',JSON.stringify(state.profile));$('#onboardWrap').hidden=true;syncChrome();renderPage(state.page);return}$('#onboardMsg').textContent='Saving…';const {data,error}=await sb.from('profiles').update(row).eq('id',state.user.id).select().single();if(error){$('#onboardMsg').textContent=error.message;return}state.profile=data;$('#onboardWrap').hidden=true;await persistInsight();enterApp();toast('Profile saved')}
-async function logout(){if(state.mode==='demo'){location.reload();return}await sb.auth.signOut();location.reload()}
+async function saveOnboarding(e){e.preventDefault();const row={display_name:$('#pName').value.trim(),birth_date:$('#pDate').value,birth_time:$('#pTime').value||null,birth_place:$('#pPlace').value.trim()||null,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,onboarding_completed:true};if(state.mode==='demo'){state.profile={...state.profile,...row};localStorage.setItem('cosmic.alpha.profile',JSON.stringify(state.profile));hidePlannerDialog($('#onboardWrap'));syncChrome();renderPage(state.page);return}$('#onboardMsg').textContent='Saving…';const {data,error}=await sb.from('profiles').update(row).eq('id',state.user.id).select().single();if(error){$('#onboardMsg').textContent=error.message;return}state.profile=data;hidePlannerDialog($('#onboardWrap'));await persistInsight();enterApp();toast('Profile saved')}
+async function logout(){if(state.mode==='demo'){location.reload();return}await flushDiary();if(pendingDiary && !confirm('Your journal could not be saved. Sign out and discard the unsaved changes?'))return;window.removeEventListener('beforeunload',warnUnsavedDiary);await sb.auth.signOut();location.reload()}
 
 function loadSDK(){return new Promise((resolve,reject)=>{if(window.supabase)return resolve();const s=document.createElement('script');s.src=document.querySelector('#plannerAssets').dataset.sdk;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
 async function authSubmit(e){e.preventDefault();const email=$('#authEmail').value.trim(),password=$('#authPassword').value,signup=$('#authSubmit').dataset.mode==='signup';$('#authMsg').textContent=signup?'Creating account…':'Signing in…';try{if(signup){const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:email.split('@')[0]}}});if(error)throw error;if(!data.session){$('#authMsg').textContent='Account created. Confirm the email, then sign in.';return}state.session=data.session;state.user=data.user}else{const {data,error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;state.session=data.session;state.user=data.user}await loadData()}catch(err){$('#authMsg').textContent=err.message||'Authentication failed'}}
 function bindAuth(){$('#authForm').onsubmit=authSubmit;$('#authToggle').onclick=()=>{const b=$('#authSubmit'),signup=b.dataset.mode!=='signup';b.dataset.mode=signup?'signup':'signin';b.textContent=signup?'Create account':'Sign in';$('#authTitle').textContent=signup?'Create your account':'Welcome back';$('#authSub').textContent=signup?'Your planner and diary will be private to your account.':'Sign in to your private planner and diary.';$('#authToggle').textContent=signup?'Already have an account? Sign in':'New here? Create an account';$('#authMsg').textContent=''};$('#demoMode').onclick=demo}
-function bindApp(){$('#quickAdd').onclick=openModal;$('#closeModal').onclick=closeModal;$('#cancelTask').onclick=closeModal;$('#modalBackdrop').onclick=e=>{if(e.target===$('#modalBackdrop'))closeModal()};$$('[data-priority]').forEach(b=>b.onclick=()=>{$$('[data-priority]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.priority=b.dataset.priority});$('#taskForm').onsubmit=addTask;$('#searchBtn').onclick=()=>toast('Search arrives after the connected core passes QA')}
+function bindApp(){$('#quickAdd').onclick=openModal;$('#closeModal').onclick=closeModal;$('#cancelTask').onclick=closeModal;$('#modalBackdrop').onclick=e=>{if(e.target===$('#modalBackdrop'))closeModal()};$$('[data-priority]').forEach(b=>b.onclick=()=>{selectPriority(b.dataset.priority)});$('#taskForm').onsubmit=addTask;$('#searchBtn').onclick=()=>toast('Search arrives after the connected core passes QA')}
 async function init(){injectAlphaUI();bindAuth();bindApp();try{await loadSDK();sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data}=await sb.auth.getSession();if(data.session){state.session=data.session;state.user=data.session.user;await loadData()}sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&!session)state.session=null})}catch(e){$('#authMsg').textContent='Secure backend connection could not load. Check your internet connection.'}}
 init();

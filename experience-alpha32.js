@@ -135,7 +135,7 @@
         </div>
         <button type="button" class="alpha32-dismiss" data-alpha32-dismiss aria-label="Dismiss first-session guide">×</button>
       </div>
-      <div class="alpha32-progress" aria-label="First-session progress"><i style="width:${(done / 3) * 100}%"></i></div>
+      <div class="alpha32-progress" role="progressbar" aria-valuemin="0" aria-valuemax="3" aria-valuenow="${done}" aria-label="First-session progress"><i style="width:${(done / 3) * 100}%"></i></div>
       <div class="alpha32-steps">
         ${[
           ['guidance','✦','Read today’s guidance'],

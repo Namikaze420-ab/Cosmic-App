@@ -109,7 +109,7 @@
     if (state.mode === 'demo') {
       state.profile = { ...state.profile, ...row };
       localStorage.setItem('cosmic.alpha.profile', JSON.stringify(state.profile));
-      document.querySelector('#onboardWrap').hidden = true;
+      hidePlannerDialog(document.querySelector('#onboardWrap'));
       syncChrome(); renderPage(state.page); return;
     }
 
@@ -117,7 +117,7 @@
     const { data, error } = await sb.from('profiles').update(row).eq('id', state.user.id).select().single();
     if (error) { msg.textContent = error.message; return; }
     state.profile = data;
-    document.querySelector('#onboardWrap').hidden = true;
+    hidePlannerDialog(document.querySelector('#onboardWrap'));
     await persistInsight();
     enterApp();
     toast('Profile saved');

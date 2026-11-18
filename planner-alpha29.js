@@ -226,8 +226,7 @@
     setReminderValues([15]);
     state.editingTaskId = null;
     state.editSeriesScope = 'single';
-    state.priority = 'Medium';
-    $$('[data-priority]').forEach(button => button.classList.toggle('selected', button.dataset.priority === 'Medium'));
+    selectPriority('Medium');
     $('#modalTitle').textContent = 'Add to your planner';
     $('#taskSubmit').textContent = 'Add to planner';
     toggleTimedFields();
@@ -251,8 +250,7 @@
     $('#taskRepeat').value = task?.recurrence_rule || 'none';
     $('#taskRepeatUntil').value = task?.recurrence_until || defaultRepeatUntil(targetDate);
     setReminderValues(task?.reminder_minutes || [15]);
-    state.priority = cap(task?.priority || 'Medium');
-    $$('[data-priority]').forEach(button => button.classList.toggle('selected', button.dataset.priority === state.priority));
+    selectPriority(cap(task?.priority || 'Medium'));
 
     const recurring = Boolean(task?.recurrence_group_id);
     $('#taskSeriesScopeField').hidden = !recurring;
@@ -260,14 +258,14 @@
     state.editSeriesScope = 'single';
     $('#modalTitle').textContent = task ? 'Edit plan' : 'Add to your planner';
     $('#taskSubmit').textContent = task ? 'Save changes' : 'Add to planner';
-    $('#modalBackdrop').hidden = false;
+    showPlannerDialog($('#modalBackdrop'));
     toggleTimedFields();
     toggleRepeatFields();
     setTimeout(() => $('#taskTitle').focus(), 20);
   };
 
   closeModal = function alpha29CloseModal() {
-    $('#modalBackdrop').hidden = true;
+    hidePlannerDialog($('#modalBackdrop'));
     resetModalState();
   };
 
@@ -439,7 +437,7 @@
   }
 
   function plannerViewSwitch() {
-    return `<div class="planner-view-switch" role="group" aria-label="Planner view"><button data-planner-view="today" class="${state.plannerView === 'today' ? 'selected' : ''}">Today</button><button data-planner-view="week" class="${state.plannerView === 'week' ? 'selected' : ''}">Week</button></div>`;
+    return `<div class="planner-view-switch" role="group" aria-label="Planner view"><button data-planner-view="today" aria-pressed="${state.plannerView === 'today'}" class="${state.plannerView === 'today' ? 'selected' : ''}">Today</button><button data-planner-view="week" aria-pressed="${state.plannerView === 'week'}" class="${state.plannerView === 'week' ? 'selected' : ''}">Week</button></div>`;
   }
 
   function bindPlannerViewSwitch() {
@@ -447,6 +445,7 @@
       state.plannerView = button.dataset.plannerView;
       if (state.plannerView === 'week') state.homeWeekCursor = new Date();
       renderHome();
+      $(`[data-planner-view="${state.plannerView}"]`)?.focus({ preventScroll: true });
     });
   }
 
@@ -517,7 +516,7 @@
       const tasks = alpha28.tasksForDate(day);
       const load = workloadForDate(day);
       const complete = tasks.filter(task => task.status === 'completed').length;
-      return `<button class="week-day ${isoDate(day) === isoDate(selectedDate) ? 'selected' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''} load-${load.level}" data-week-date="${isoDate(day)}"><span>${fmtDate(day, { weekday: 'short' })}</span><strong>${day.getDate()}</strong><small>${tasks.length ? `${tasks.length} plan${tasks.length === 1 ? '' : 's'} · ${formatDuration(load.timed)}${load.allDay ? ` + ${load.allDay} all-day` : ''}` : 'Free'}</small><em>${load.label}</em>${tasks.length ? `<i style="width:${Math.round((complete / tasks.length) * 100)}%"></i>` : '<i style="width:0"></i>'}</button>`;
+      return `<button class="week-day ${isoDate(day) === isoDate(selectedDate) ? 'selected' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''} load-${load.level}" data-week-date="${isoDate(day)}" aria-pressed="${isoDate(day) === isoDate(selectedDate)}"><span>${fmtDate(day, { weekday: 'short' })}</span><strong>${day.getDate()}</strong><small>${tasks.length ? `${tasks.length} plan${tasks.length === 1 ? '' : 's'} · ${formatDuration(load.timed)}${load.allDay ? ` + ${load.allDay} all-day` : ''}` : 'Free'}</small><em>${load.label}</em>${tasks.length ? `<i style="width:${Math.round((complete / tasks.length) * 100)}%"></i>` : '<i style="width:0"></i>'}</button>`;
     }).join('')}</div></section>`;
   }
 
@@ -537,6 +536,7 @@
       state.calendarCursor = new Date(state.selectedDate.getFullYear(), state.selectedDate.getMonth(), 1);
       try { await alpha28.ensurePlannerMonth(state.selectedDate); } catch { toast('Could not load plans'); }
       renderCalendar();
+      $(`[data-week-date="${button.dataset.weekDate}"]`)?.focus({ preventScroll: true });
     });
     bindTaskButtons(page);
   }

@@ -248,6 +248,7 @@
       prompt.innerHTML = `<span>Personal Day ${i.personalDay}</span><strong>${esc(read.guidance.prompt)}</strong><small>${esc(read.guidance.title)} · use this only if it helps you reflect.</small>`;
       const row = document.createElement('div');
       row.className = 'guided-prompt-row';
+      row.setAttribute('role', 'group');
       row.setAttribute('aria-label', 'Guided reflection prompts');
       row.innerHTML = journalPrompts(i).map((text, index) => `<button type="button" class="prompt-chip" data-journal-prompt="${index}">${index === 0 ? 'Today’s prompt' : index === 1 ? 'Pattern check' : 'Tomorrow'}</button>`).join('');
       prompt.after(row);
@@ -413,13 +414,14 @@
           <span aria-hidden="true">⌕</span>
           <label class="sr-only" for="commandInput" id="commandTitle">Quick actions</label>
           <input id="commandInput" autocomplete="off" placeholder="Search actions…" aria-label="Search quick actions">
-          <kbd>Esc</kbd>
+          <button class="icon-btn" id="closeCommands" aria-label="Close quick actions">×</button>
         </div>
         <div class="command-list" id="commandList"></div>
         <div class="command-footer"><span>Quick navigation</span><span><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>K</kbd></span></div>
       </section>`;
     document.body.appendChild(overlay);
 
+    overlay.querySelector('#closeCommands').onclick = closeCommandPalette;
     overlay.addEventListener('click', event => {
       if (event.target === overlay) closeCommandPalette();
     });
@@ -455,7 +457,7 @@
         <span class="command-icon" aria-hidden="true">${command.icon}</span>
         <span><strong>${esc(command.label)}</strong><small>${esc(command.hint)}</small></span>
         <kbd>${index === 0 && !query ? '↵' : ''}</kbd>
-      </button>`).join('') : '<div class="command-empty">No matching actions.</div>';
+      </button>`).join('') : '<div class="command-empty" role="status">No matching actions. Try “Journal” or “Add”.</div>';
     list.querySelectorAll('[data-command-index]').forEach(button => {
       button.addEventListener('click', () => COMMANDS[Number(button.dataset.commandIndex)]?.action());
     });
@@ -464,8 +466,8 @@
   function openCommandPalette() {
     ensureCommandPalette();
     const overlay = document.querySelector('#commandPalette');
-    if (!overlay) return;
-    overlay.hidden = false;
+    if (!overlay || !overlay.hidden || [...document.querySelectorAll('[role="dialog"]')].some(el => el.getClientRects().length)) return;
+    showPlannerDialog(overlay);
     const input = document.querySelector('#commandInput');
     input.value = '';
     renderCommands();
@@ -474,7 +476,7 @@
 
   function closeCommandPalette() {
     const overlay = document.querySelector('#commandPalette');
-    if (overlay) overlay.hidden = true;
+    if (overlay && !overlay.hidden) hidePlannerDialog(overlay);
   }
 
   function bindModernCommands() {

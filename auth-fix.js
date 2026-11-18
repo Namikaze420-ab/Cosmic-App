@@ -155,9 +155,11 @@
           <label>Confirm password<input id="recoveryPassword2" type="password" minlength="8" autocomplete="new-password" required></label>
           <button id="recoverySubmit" class="primary-btn" type="submit">Update password</button>
         </form>
-        <div id="recoveryMsg" class="auth-msg"></div>
+        <div role="status" id="recoveryMsg" class="auth-msg"></div>
       </section>`;
     document.body.appendChild(wrap);
+    showPlannerDialog(wrap);
+    $auth('#recoveryPassword').focus();
 
     $auth('#recoveryForm').onsubmit = async (event) => {
       event.preventDefault();
@@ -176,6 +178,7 @@
         if (error) throw error;
         msg.textContent = 'Password updated. Loading your account…';
         const { data } = await sb.auth.getSession();
+        hidePlannerDialog(wrap);
         if (data?.session) {
           state.session = data.session;
           state.user = data.session.user;

@@ -59,20 +59,20 @@ export function PlanDialog() {
               <option>Other</option>
             </select>
           </label>
-          <label className="field full">
-            <span>Priority</span>
+          <fieldset className="field full">
+            <legend>Priority</legend>
             <div className="segmented">
-              <button type="button" data-priority="Low">
+              <button type="button" data-priority="Low" aria-pressed={false}>
                 Low
               </button>
-              <button type="button" data-priority="Medium" className="selected">
+              <button type="button" data-priority="Medium" aria-pressed={true} className="selected">
                 Medium
               </button>
-              <button type="button" data-priority="High">
+              <button type="button" data-priority="High" aria-pressed={false}>
                 High
               </button>
             </div>
-          </label>
+          </fieldset>
           <label className="field full">
             <span>Repeat</span>
             <select id="taskRepeat">

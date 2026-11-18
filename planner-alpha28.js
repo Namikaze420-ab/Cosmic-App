@@ -132,24 +132,22 @@
     $('#taskTime').value = task ? timeInputValue(task.starts_at) : '14:30';
     $('#taskTitle').value = task?.title || '';
     $('#taskCategory').value = cap(task?.category || 'Work');
-    state.priority = cap(task?.priority || 'Medium');
-    $$('[data-priority]').forEach(button => button.classList.toggle('selected', button.dataset.priority === state.priority));
+    selectPriority(cap(task?.priority || 'Medium'));
     $('#modalTitle').textContent = task ? 'Edit plan' : 'Add to your planner';
     $('#taskSubmit').textContent = task ? 'Save changes' : 'Add to planner';
-    $('#modalBackdrop').hidden = false;
+    showPlannerDialog($('#modalBackdrop'));
     setTimeout(() => $('#taskTitle').focus(), 20);
   };
 
   closeModal = function alpha28CloseModal() {
-    $('#modalBackdrop').hidden = true;
+    hidePlannerDialog($('#modalBackdrop'));
     $('#taskForm').reset();
     $('#taskDate').value = isoDate(new Date());
     $('#taskTime').value = '14:30';
     $('#modalTitle').textContent = 'Add to your planner';
     $('#taskSubmit').textContent = 'Add to planner';
     state.editingTaskId = null;
-    state.priority = 'Medium';
-    $$('[data-priority]').forEach(button => button.classList.toggle('selected', button.dataset.priority === 'Medium'));
+    selectPriority('Medium');
   };
 
   function renderPlannerSurface() {
@@ -257,7 +255,7 @@
       const tasks = tasksForDate(day);
       const minutes = tasks.reduce((sum, task) => sum + durationMinutes(task), 0);
       const complete = tasks.filter(task => task.status === 'completed').length;
-      return `<button class="week-day ${isoDate(day) === isoDate(selectedDate) ? 'selected' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''}" data-week-date="${isoDate(day)}"><span>${fmtDate(day, { weekday: 'short' })}</span><strong>${day.getDate()}</strong><small>${tasks.length ? `${tasks.length} plan${tasks.length === 1 ? '' : 's'} · ${(minutes / 60).toFixed(minutes % 60 ? 1 : 0)}h` : 'Free'}</small>${tasks.length ? `<i style="width:${Math.round((complete / tasks.length) * 100)}%"></i>` : '<i style="width:0"></i>'}</button>`;
+      return `<button class="week-day ${isoDate(day) === isoDate(selectedDate) ? 'selected' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''}" data-week-date="${isoDate(day)}" aria-pressed="${isoDate(day) === isoDate(selectedDate)}"><span>${fmtDate(day, { weekday: 'short' })}</span><strong>${day.getDate()}</strong><small>${tasks.length ? `${tasks.length} plan${tasks.length === 1 ? '' : 's'} · ${(minutes / 60).toFixed(minutes % 60 ? 1 : 0)}h` : 'Free'}</small>${tasks.length ? `<i style="width:${Math.round((complete / tasks.length) * 100)}%"></i>` : '<i style="width:0"></i>'}</button>`;
     }).join('')}</div></section>`;
   }
 
@@ -277,7 +275,7 @@
       const count = inMonth ? tasksForDate(day).length : 0;
       const cls = dayInsight?.score >= 82 ? 'high' : dayInsight?.score >= 70 ? 'mid' : 'low';
       const selected = isoDate(day) === isoDate(state.selectedDate);
-      cells += `<button class="day-cell ${!inMonth ? 'muted' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''} ${selected ? 'selected' : ''}" data-date="${inMonth ? isoDate(day) : ''}"><span class="day-number">${day.getDate()}</span>${inMonth && dayInsight ? `<span class="luck-dot ${cls}"></span>` : ''}${count ? `<span class="plan-count" aria-label="${count} plans">${count}</span>` : ''}</button>`;
+      cells += `<button class="day-cell ${!inMonth ? 'muted' : ''} ${isoDate(day) === isoDate(new Date()) ? 'today' : ''} ${selected ? 'selected' : ''}" data-date="${inMonth ? isoDate(day) : ''}" ${inMonth ? `aria-pressed="${selected}"` : 'disabled'} aria-label="${fmtDate(day, {weekday:'long',day:'numeric',month:'long',year:'numeric'})}, ${count} ${count === 1 ? 'plan' : 'plans'}"><span class="day-number">${day.getDate()}</span>${inMonth && dayInsight ? `<span class="luck-dot ${cls}"></span>` : ''}${count ? `<span class="plan-count" aria-label="${count} plans">${count}</span>` : ''}</button>`;
     }
 
     const selectedInsight = insight(state.selectedDate);
@@ -288,16 +286,19 @@
       state.calendarCursor = new Date(year, month - 1, 1);
       try { await ensurePlannerMonth(state.calendarCursor); } catch { toast('Could not load that month'); }
       renderCalendar();
+      $(`#prevMonth`)?.focus({ preventScroll: true });
     };
     $('#nextMonth').onclick = async () => {
       state.calendarCursor = new Date(year, month + 1, 1);
       try { await ensurePlannerMonth(state.calendarCursor); } catch { toast('Could not load that month'); }
       renderCalendar();
+      $(`#nextMonth`)?.focus({ preventScroll: true });
     };
     $('#todayMonth').onclick = () => {
       state.calendarCursor = new Date();
       state.selectedDate = new Date();
       renderCalendar();
+      $(`#todayMonth`)?.focus({ preventScroll: true });
     };
     $('#addSelectedPlan').onclick = () => openModal(state.selectedDate);
     $$('[data-date]').forEach(button => button.onclick = async () => {
@@ -305,6 +306,7 @@
       state.selectedDate = parseDate(button.dataset.date);
       try { await ensurePlannerMonth(state.selectedDate); } catch { toast('Could not load plans'); }
       renderCalendar();
+      $(`[data-date="${button.dataset.date}"]`)?.focus({ preventScroll: true });
     });
     $$('[data-week-date]').forEach(button => button.onclick = async () => {
       state.selectedDate = parseDate(button.dataset.weekDate);
