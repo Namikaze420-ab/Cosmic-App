@@ -1,0 +1,20 @@
+{
+  "name": "Cosmic Planner",
+  "short_name": "Cosmic",
+  "description": "A private planner, journal and personalized reflection experience for planning each day with context.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5f1",
+  "theme_color": "#111318",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

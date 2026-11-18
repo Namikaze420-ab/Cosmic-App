@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Cosmic Planner</title>
+  <desc id="desc">A four-point star on a dark rounded square.</desc>
+  <rect width="512" height="512" rx="112" fill="#111318"/>
+  <circle cx="256" cy="256" r="124" fill="none" stroke="#3a3d45" stroke-width="12"/>
+  <path d="M256 116c17 74 42 99 116 116-74 17-99 42-116 116-17-74-42-99-116-116 74-17 99-42 116-116Z" fill="#f5f4f0"/>
+  <circle cx="350" cy="162" r="18" fill="#c7bfff"/>
+</svg>
